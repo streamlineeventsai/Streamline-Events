@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Streamline Events | Register</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-H4oJ61CwPq8bFhfGf7eH3eIuFPeQh+8RId0nJ5zWJpq+F+bD+5pcKXk067YmPbt7OR5jv2LeAqz3YBUGMQ+I5Q==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav-container">
+      <a class="brand" href="index.html">Streamline Events</a>
+      <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
+      <nav class="main-nav">
+        <a href="index.html">Home</a>
+        <a href="events.html">Events</a>
+        <a href="register.html">Register</a>
+        <a href="gallery.html">Gallery</a>
+        <a href="contact.html">Contact</a>
+        <a href="admin.html">Admin</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="page-hero">
+      <div class="container">
+        <h1>Register for an Event</h1>
+        <p>Fill out your details and choose an event to secure your spot. QR code will be generated after submission.</p>
+      </div>
+    </section>
+
+    <section class="container form-section">
+      <div class="form-card">
+        <h2>Registration Form</h2>
+        <form id="registration-form">
+          <label for="fullName">Full Name <span class="required">*</span></label>
+          <input type="text" id="fullName" name="fullName" placeholder="Enter your full name (letters & spaces, min 3)" required />
+          <div class="error-message" id="fullNameError"></div>
+
+          <label for="email">Email Address <span class="required">*</span></label>
+          <input type="email" id="email" name="email" placeholder="your@email.com" required />
+          <div class="error-message" id="emailError"></div>
+
+          <label for="phone">Phone Number (Pakistan format) <span class="required">*</span></label>
+          <input type="tel" id="phone" name="phone" placeholder="03xx-xxxxxxx or 03xxxxxxxxx (11 digits)" required />
+          <div class="error-message" id="phoneError"></div>
+
+          <label for="eventSelect">Select Event <span class="required">*</span></label>
+          <select id="eventSelect" name="eventSelect" required>
+            <option value="">Choose an event</option>
+            <option value="Tech Conference 2026">Tech Conference 2026</option>
+            <option value="AI Workshop">AI Workshop</option>
+            <option value="Networking Night">Networking Night</option>
+            <option value="Leadership Summit">Leadership Summit</option>
+          </select>
+          <div class="error-message" id="eventError"></div>
+
+          <button type="submit" class="btn btn-primary" id="submitBtn">Submit Registration</button>
+        </form>
+        <p class="form-note"><span class="required">*</span> All fields are required</p>
+      </div>
+      <div class="qr-card shadow">
+        <h2>QR Code</h2>
+        <p id="registration-status">Submit the form to receive your QR code.</p>
+        <div id="qrCodeContainer" class="qr-preview"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div>
+        <h3>Streamline Events</h3>
+        <p>Delivering elegant event experiences with automation, QR capabilities, and support built in.</p>
+      </div>
+      <div>
+        <h4>Contact</h4>
+        <p>Email: <a href="mailto:support@streamlineevents.com">support@streamlineevents.com</a></p>
+        <p>Location: Lahore, Pakistan</p>
+      </div>
+      <div>
+        <h4>Follow</h4>
+        <p><a href="#"><i class="fa-brands fa-facebook-f"></i> Facebook</a></p>
+        <p><a href="#"><i class="fa-brands fa-instagram"></i> Instagram</a></p>
+      </div>
+    </div>
+    <div class="footer-note">© 2026 Streamline Events. All rights reserved.</div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('registration-form');
+      const fullNameInput = document.getElementById('fullName');
+      const emailInput = document.getElementById('email');
+      const phoneInput = document.getElementById('phone');
+      const eventInput = document.getElementById('eventSelect');
+      const submitBtn = document.getElementById('submitBtn');
+
+      function updateErrors() {
+        const nameError = document.getElementById('fullNameError');
+        const emailError = document.getElementById('emailError');
+        const phoneError = document.getElementById('phoneError');
+        const eventError = document.getElementById('eventError');
+
+        // Clear previous errors
+        nameError.textContent = '';
+        emailError.textContent = '';
+        phoneError.textContent = '';
+        eventError.textContent = '';
+
+        let allValid = true;
+
+        // Validate Full Name
+        if (fullNameInput.value.trim() === '') {
+          nameError.textContent = 'Full Name is required';
+          allValid = false;
+        } else if (!validateFullName(fullNameInput.value)) {
+          nameError.textContent = 'Full Name must be 3+ characters, letters and spaces only';
+          allValid = false;
+        } else {
+          fullNameInput.classList.add('input-valid');
+          fullNameInput.classList.remove('input-error');
+        }
+
+        // Validate Email
+        if (emailInput.value.trim() === '') {
+          emailError.textContent = 'Email is required';
+          allValid = false;
+        } else if (!validateEmail(emailInput.value)) {
+          emailError.textContent = 'Email must contain @ and a domain';
+          allValid = false;
+        } else {
+          emailInput.classList.add('input-valid');
+          emailInput.classList.remove('input-error');
+        }
+
+        // Validate Phone
+        if (phoneInput.value.trim() === '') {
+          phoneError.textContent = 'Phone Number is required';
+          allValid = false;
+        } else if (!validatePakistanPhone(phoneInput.value)) {
+          phoneError.textContent = 'Phone must be Pakistan format (03xx-xxxxxxx or 03xxxxxxxxx)';
+          allValid = false;
+        } else {
+          phoneInput.classList.add('input-valid');
+          phoneInput.classList.remove('input-error');
+        }
+
+        // Validate Event
+        if (!validateEventSelect(eventInput.value)) {
+          eventError.textContent = 'Please select an event';
+          allValid = false;
+        } else {
+          eventInput.classList.add('input-valid');
+          eventInput.classList.remove('input-error');
+        }
+
+        // Enable/disable submit button
+        submitBtn.disabled = !allValid;
+        if (allValid) {
+          submitBtn.style.opacity = '1';
+          submitBtn.style.cursor = 'pointer';
+        } else {
+          submitBtn.style.opacity = '0.5';
+          submitBtn.style.cursor = 'not-allowed';
+        }
+      }
+
+      fullNameInput.addEventListener('input', updateErrors);
+      emailInput.addEventListener('input', updateErrors);
+      phoneInput.addEventListener('input', updateErrors);
+      eventInput.addEventListener('change', updateErrors);
+
+      // Initial state
+      submitBtn.disabled = true;
+      submitBtn.style.opacity = '0.5';
+      updateErrors();
+    });
+  </script>
+  <script>/* Botpress embed placeholder */
+    window.botpressWebchat = { botId: 'YOUR_BOTPRESS_BOT_ID', host: 'https://cdn.botpress.com' };
+  </script>
+  <script src="https://cdn.botpress.com/webchat/v0/inject.js"></script>
+</body>
+</html>

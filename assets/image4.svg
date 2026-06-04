@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400">
+  <rect width="600" height="400" fill="#081533" />
+  <rect x="40" y="40" width="520" height="320" rx="24" fill="#f4f3ef" />
+  <text x="50%" y="45%" dominant-baseline="middle" text-anchor="middle" fill="#071a3d" font-size="34" font-family="Poppins, sans-serif">Tech Demo Booth</text>
+  <circle cx="400" cy="310" r="26" fill="#e5b64a" opacity="0.24" />
+</svg>

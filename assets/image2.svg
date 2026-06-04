@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400">
+  <rect width="600" height="400" fill="#071a3d" />
+  <rect x="35" y="35" width="530" height="330" rx="24" fill="#f7f5ef" />
+  <text x="50%" y="48%" dominant-baseline="middle" text-anchor="middle" fill="#e5b64a" font-size="34" font-family="Poppins, sans-serif">Networking Night</text>
+  <line x1="120" y1="260" x2="480" y2="260" stroke="#e5b64a" stroke-width="8" stroke-linecap="round" />
+</svg>

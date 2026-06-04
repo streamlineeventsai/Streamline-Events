@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Streamline Events | Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-H4oJ61CwPq8bFhfGf7eH3eIuFPeQh+8RId0nJ5zWJpq+F+bD+5pcKXk067YmPbt7OR5jv2LeAqz3YBUGMQ+I5Q==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav-container">
+      <a class="brand" href="index.html">Streamline Events</a>
+      <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
+      <nav class="main-nav">
+        <a href="index.html">Home</a>
+        <a href="events.html">Events</a>
+        <a href="register.html">Register</a>
+        <a href="gallery.html">Gallery</a>
+        <a href="contact.html">Contact</a>
+        <a href="admin.html">Admin</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="adminContent" style="display: none;">
+    <section class="page-hero">
+      <div class="container">
+        <h1>Admin Dashboard</h1>
+        <p>Manage events, registrations, attendance, and view analytics.</p>
+        <button onclick="adminLogout()" class="btn btn-secondary" style="margin-top: 1rem;">Logout</button>
+      </div>
+    </section>
+
+    <div class="container admin-section">
+      <!-- Navigation Tabs -->
+      <div class="admin-tabs">
+        <button class="tab-btn active" onclick="switchTab('dashboard')">Dashboard</button>
+        <button class="tab-btn" onclick="switchTab('events')">Events</button>
+        <button class="tab-btn" onclick="switchTab('registrations')">Registrations</button>
+        <button class="tab-btn" onclick="switchTab('attendance')">Attendance</button>
+      </div>
+
+      <!-- DASHBOARD TAB -->
+      <div id="dashboard" class="tab-content active">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <i class="fa-solid fa-calendar-days" style="color: var(--gold); font-size: 2rem;"></i>
+            <h3>Total Events</h3>
+            <p class="stat-number" id="totalEventsCount">0</p>
+          </div>
+          <div class="stat-card">
+            <i class="fa-solid fa-users" style="color: var(--gold); font-size: 2rem;"></i>
+            <h3>Total Registrations</h3>
+            <p class="stat-number" id="totalRegsCount">0</p>
+          </div>
+          <div class="stat-card">
+            <i class="fa-solid fa-check-circle" style="color: var(--gold); font-size: 2rem;"></i>
+            <h3>Present</h3>
+            <p class="stat-number" id="totalPresentCount">0</p>
+          </div>
+          <div class="stat-card">
+            <i class="fa-solid fa-times-circle" style="color: var(--gold); font-size: 2rem;"></i>
+            <h3>Absent</h3>
+            <p class="stat-number" id="totalAbsentCount">0</p>
+          </div>
+        </div>
+
+        <div class="chart-container" style="margin-top: 2rem;">
+          <h3>Registration Distribution by Event</h3>
+          <canvas id="eventChart" style="max-height: 300px;"></canvas>
+        </div>
+
+        <div class="export-buttons" style="margin-top: 2rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+          <button onclick="exportRegistrationsCSV()" class="btn btn-primary">
+            <i class="fa-solid fa-download"></i> Export Registrations
+          </button>
+          <button onclick="exportAttendanceCSV()" class="btn btn-primary">
+            <i class="fa-solid fa-download"></i> Export Attendance
+          </button>
+        </div>
+      </div>
+
+      <!-- EVENTS TAB -->
+      <div id="events" class="tab-content">
+        <div class="admin-card shadow">
+          <h2>Add New Event</h2>
+          <form id="eventForm">
+            <input type="hidden" id="eventId" value="" />
+            <div class="form-row">
+              <div class="form-group">
+                <label>Event Name</label>
+                <input type="text" id="eventName" required />
+              </div>
+              <div class="form-group">
+                <label>Date</label>
+                <input type="date" id="eventDate" required />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Location</label>
+                <input type="text" id="eventLocation" required />
+              </div>
+              <div class="form-group">
+                <label>Capacity</label>
+                <input type="number" id="eventCapacity" required />
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Description</label>
+              <textarea id="eventDescription" rows="3" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Add Event</button>
+          </form>
+        </div>
+
+        <div class="admin-card shadow" style="margin-top: 2rem;">
+          <h2>Events List</h2>
+          <div class="table-wrap">
+            <table id="eventsTable">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Date</th>
+                  <th>Location</th>
+                  <th>Capacity</th>
+                  <th>Description</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="eventsTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- REGISTRATIONS TAB -->
+      <div id="registrations" class="tab-content">
+        <div class="admin-card shadow">
+          <h2>Registrations</h2>
+          <div style="margin-bottom: 1.5rem;">
+            <label>Filter by Event:</label>
+            <select id="regFilterEvent" onchange="updateRegistrationsTable()">
+              <option value="">All Events</option>
+            </select>
+          </div>
+          <div class="table-wrap">
+            <table id="registrationsTable">
+              <thead>
+                <tr>
+                  <th>Reg ID</th>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Phone</th>
+                  <th>Event</th>
+                  <th>QR Code</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="registrationsTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ATTENDANCE TAB -->
+      <div id="attendance" class="tab-content">
+        <div class="admin-card shadow">
+          <h2>QR Scan Simulation</h2>
+          <form id="attendanceForm">
+            <label>Enter Registration ID to Mark Attendance</label>
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+              <input type="text" id="attendanceRegId" placeholder="REG-001" required style="flex: 1; min-width: 150px;" />
+              <select id="attendanceStatus" required>
+                <option value="">Select Status</option>
+                <option value="Present">Present</option>
+                <option value="Absent">Absent</option>
+              </select>
+              <button type="submit" class="btn btn-primary">Mark Attendance</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="admin-card shadow" style="margin-top: 2rem;">
+          <h2>Attendance Records</h2>
+          <div class="table-wrap">
+            <table id="attendanceTable">
+              <thead>
+                <tr>
+                  <th>Reg ID</th>
+                  <th>Name</th>
+                  <th>Event</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="attendanceTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="admin-card shadow" style="margin-top: 2rem;">
+          <h2>Attendance Summary by Event</h2>
+          <div id="attendanceSummary"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div>
+        <h3>Streamline Events</h3>
+        <p>Delivering elegant event experiences with automation, QR capabilities, and support built in.</p>
+      </div>
+      <div>
+        <h4>Contact</h4>
+        <p>Email: <a href="mailto:support@streamlineevents.com">support@streamlineevents.com</a></p>
+        <p>Location: Lahore, Pakistan</p>
+      </div>
+      <div>
+        <h4>Follow</h4>
+        <p><a href="#"><i class="fa-brands fa-facebook-f"></i> Facebook</a></p>
+        <p><a href="#"><i class="fa-brands fa-instagram"></i> Instagram</a></p>
+      </div>
+    </div>
+    <div class="footer-note">© 2026 Streamline Events. All rights reserved.</div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+  <script>
+    // ============ ADMIN PAGE PROTECTION ============
+    let adminAuthorized = false;
+    let eventChart = null;
+
+    function checkAdminAuth() {
+      const password = prompt('Enter Admin Password:');
+      if (password === 'admin123') {
+        adminAuthorized = true;
+        document.getElementById('adminContent').style.display = 'block';
+        initializeAdminDashboard();
+      } else {
+        alert('Access Denied');
+        window.location.href = 'index.html';
+      }
+    }
+
+    function adminLogout() {
+      adminAuthorized = false;
+      window.location.href = 'index.html';
+    }
+
+    function switchTab(tabName) {
+      // Hide all tabs
+      const tabs = document.querySelectorAll('.tab-content');
+      tabs.forEach(tab => tab.classList.remove('active'));
+
+      // Remove active class from buttons
+      const buttons = document.querySelectorAll('.tab-btn');
+      buttons.forEach(btn => btn.classList.remove('active'));
+
+      // Show selected tab and mark button as active
+      document.getElementById(tabName).classList.add('active');
+      event.target.classList.add('active');
+    }
+
+    function initializeAdminDashboard() {
+      initializeLocalStorage();
+      updateDashboardStats();
+      populateEventsList();
+      populateRegistrationsFilter();
+      updateRegistrationsTable();
+      updateAttendanceTable();
+      updateAttendanceSummary();
+      initializeChart();
+    }
+
+    function updateDashboardStats() {
+      const events = getEvents();
+      const registrations = getRegistrations();
+      const attendance = getAttendance();
+
+      document.getElementById('totalEventsCount').textContent = events.length;
+      document.getElementById('totalRegsCount').textContent = registrations.length;
+
+      const presentCount = attendance.filter(a => a.status === 'Present').length;
+      const absentCount = attendance.filter(a => a.status === 'Absent').length;
+
+      document.getElementById('totalPresentCount').textContent = presentCount;
+      document.getElementById('totalAbsentCount').textContent = absentCount;
+    }
+
+    function initializeChart() {
+      const events = getEvents();
+      const registrations = getRegistrations();
+
+      const eventCounts = {};
+      events.forEach(e => {
+        const count = registrations.filter(r => r.event === e.name).length;
+        eventCounts[e.name] = count;
+      });
+
+      const ctx = document.getElementById('eventChart').getContext('2d');
+      if (eventChart) eventChart.destroy();
+
+      eventChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: Object.keys(eventCounts),
+          datasets: [{
+            label: 'Registrations',
+            data: Object.values(eventCounts),
+            backgroundColor: 'var(--gold)',
+            borderColor: 'var(--navy)',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: { beginAtZero: true, ticks: { stepSize: 1 } }
+          }
+        }
+      });
+    }
+
+    // ============ EVENTS MANAGEMENT ============
+    document.getElementById('eventForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const eventId = document.getElementById('eventId').value;
+      const event = {
+        name: document.getElementById('eventName').value,
+        date: document.getElementById('eventDate').value,
+        location: document.getElementById('eventLocation').value,
+        capacity: parseInt(document.getElementById('eventCapacity').value),
+        description: document.getElementById('eventDescription').value
+      };
+
+      if (eventId) {
+        event.id = parseInt(eventId);
+      }
+
+      saveEvent(event);
+      const message = eventId ? 'Event updated successfully!' : 'Event added successfully!';
+      alert(message);
+      document.getElementById('eventForm').reset();
+      document.getElementById('eventId').value = '';
+      document.querySelector('button[type="submit"]').textContent = 'Add Event';
+      populateEventsList();
+      populateRegistrationsFilter();
+      initializeChart();
+    });
+
+    function populateEventsList() {
+      const events = getEvents();
+      const tbody = document.getElementById('eventsTableBody');
+      tbody.innerHTML = '';
+
+      events.forEach(event => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${event.name}</td>
+          <td>${event.date}</td>
+          <td>${event.location}</td>
+          <td>${event.capacity}</td>
+          <td>${event.description}</td>
+          <td>
+            <button class="btn-icon" onclick="editEventAdmin(${event.id})" title="Edit"><i class="fa-solid fa-edit"></i> Edit</button>
+            <button class="btn-icon" onclick="deleteEventAdmin(${event.id})" title="Delete"><i class="fa-solid fa-trash"></i> Delete</button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function editEventAdmin(eventId) {
+      const events = getEvents();
+      const event = events.find(e => e.id === eventId);
+      if (event) {
+        document.getElementById('eventId').value = event.id;
+        document.getElementById('eventName').value = event.name;
+        document.getElementById('eventDate').value = event.date;
+        document.getElementById('eventLocation').value = event.location;
+        document.getElementById('eventCapacity').value = event.capacity;
+        document.getElementById('eventDescription').value = event.description;
+        document.querySelector('button[type="submit"]').textContent = 'Update Event';
+        document.querySelector('.admin-tabs').scrollIntoView();
+      }
+    }
+
+    function deleteEventAdmin(eventId) {
+      if (confirm('Are you sure you want to delete this event?')) {
+        deleteEvent(eventId);
+        alert('Event deleted');
+        populateEventsList();
+        populateRegistrationsFilter();
+        initializeChart();
+      }
+    }
+
+    // ============ REGISTRATIONS MANAGEMENT ============
+    function populateRegistrationsFilter() {
+      const events = getEvents();
+      const filterSelect = document.getElementById('regFilterEvent');
+      filterSelect.innerHTML = '<option value="">All Events</option>';
+
+      events.forEach(event => {
+        const option = document.createElement('option');
+        option.value = event.name;
+        option.textContent = event.name;
+        filterSelect.appendChild(option);
+      });
+    }
+
+    function updateRegistrationsTable() {
+      const registrations = getRegistrations();
+      const filterEvent = document.getElementById('regFilterEvent').value;
+      const filtered = filterEvent ? registrations.filter(r => r.event === filterEvent) : registrations;
+
+      const tbody = document.getElementById('registrationsTableBody');
+      tbody.innerHTML = '';
+
+      filtered.forEach(reg => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${reg.regId}</td>
+          <td>${reg.name}</td>
+          <td>${reg.email}</td>
+          <td>${reg.phone}</td>
+          <td>${reg.event}</td>
+          <td><a href="${reg.qrUrl}" target="_blank" class="btn-small">View QR</a></td>
+          <td>
+            <button class="btn-icon" onclick="deleteRegAdmin('${reg.regId}')"><i class="fa-solid fa-trash"></i> Delete</button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function deleteRegAdmin(regId) {
+      if (confirm('Are you sure you want to delete this registration?')) {
+        deleteRegistration(regId);
+        alert('Registration deleted');
+        updateRegistrationsTable();
+        updateDashboardStats();
+        initializeChart();
+      }
+    }
+
+    // ============ ATTENDANCE MANAGEMENT ============
+    document.getElementById('attendanceForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const regId = document.getElementById('attendanceRegId').value;
+      const status = document.getElementById('attendanceStatus').value;
+
+      if (!regId || !status) {
+        alert('Please fill in all fields');
+        return;
+      }
+
+      markAttendance(regId, status);
+      alert(`Attendance marked: ${regId} - ${status}`);
+      document.getElementById('attendanceForm').reset();
+      updateAttendanceTable();
+      updateAttendanceSummary();
+      updateDashboardStats();
+      initializeChart();
+    });
+
+    function updateAttendanceTable() {
+      const attendance = getAttendance();
+      const tbody = document.getElementById('attendanceTableBody');
+      tbody.innerHTML = '';
+
+      attendance.forEach(att => {
+        const row = document.createElement('tr');
+        const badgeClass = att.status === 'Present' ? 'badge-success' : 'badge-danger';
+        row.innerHTML = `
+          <td>${att.regId}</td>
+          <td>${att.name}</td>
+          <td>${att.event}</td>
+          <td><span class="badge ${badgeClass}">${att.status}</span></td>
+          <td>
+            <button class="btn-icon" onclick="toggleAttendanceStatus('${att.regId}')">
+              <i class="fa-solid fa-repeat"></i> Toggle
+            </button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function toggleAttendanceStatus(regId) {
+      const attendance = getAttendance();
+      const att = attendance.find(a => a.regId === regId);
+      if (att) {
+        att.status = att.status === 'Present' ? 'Absent' : 'Present';
+        localStorage.setItem('attendance', JSON.stringify(attendance));
+        updateAttendanceTable();
+        updateAttendanceSummary();
+        updateDashboardStats();
+      }
+    }
+
+    function updateAttendanceSummary() {
+      const attendance = getAttendance();
+      const events = getEvents();
+      const summary = document.getElementById('attendanceSummary');
+      summary.innerHTML = '';
+
+      const eventSummary = {};
+      events.forEach(e => {
+        eventSummary[e.name] = { present: 0, absent: 0 };
+      });
+
+      attendance.forEach(att => {
+        if (eventSummary[att.event]) {
+          if (att.status === 'Present') {
+            eventSummary[att.event].present++;
+          } else {
+            eventSummary[att.event].absent++;
+          }
+        }
+      });
+
+      Object.entries(eventSummary).forEach(([event, counts]) => {
+        const total = counts.present + counts.absent || 1;
+        const presentPct = ((counts.present / total) * 100).toFixed(1);
+        summary.innerHTML += `
+          <div style="margin-bottom: 1rem; padding: 1rem; background: var(--light-grey); border-radius: 12px;">
+            <h4>${event}</h4>
+            <p>Present: <strong>${counts.present}</strong> | Absent: <strong>${counts.absent}</strong> | Percentage: <strong>${presentPct}%</strong></p>
+          </div>
+        `;
+      });
+    }
+
+    // ============ CSV EXPORT ============
+    function exportRegistrationsCSV() {
+      const registrations = getRegistrations();
+      const headers = ['Registration ID', 'Name', 'Email', 'Phone', 'Event', 'Date'];
+      const rows = registrations.map(r => [r.regId, r.name, r.email, r.phone, r.event, r.timestamp]);
+      exportToCSV('registrations.csv', headers, rows);
+    }
+
+    function exportAttendanceCSV() {
+      const attendance = getAttendance();
+      const headers = ['Registration ID', 'Name', 'Event', 'Status'];
+      const rows = attendance.map(a => [a.regId, a.name, a.event, a.status]);
+      exportToCSV('attendance.csv', headers, rows);
+    }
+
+    // ============ INITIALIZATION ============
+    window.addEventListener('DOMContentLoaded', () => {
+      checkAdminAuth();
+    });
+  </script>
+  <script>/* Botpress embed placeholder */
+    window.botpressWebchat = { botId: 'YOUR_BOTPRESS_BOT_ID', host: 'https://cdn.botpress.com' };
+  </script>
+  <script src="https://cdn.botpress.com/webchat/v0/inject.js"></script>
+</body>
+</html>
