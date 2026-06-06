@@ -1,157 +1,136 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - Streamline Events</title>
-    <link rel="stylesheet" href="css/style.css">
-    <script src="js/main.js" defer></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Register - Streamline Events</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
-    <nav>
-        <!-- Simple navbar – aap apna navbar yahan paste kar sakte ho -->
-        <ul>
-            <li><a href="index.html">Home</a></li>
-            <li><a href="events.html">Events</a></li>
-            <li><a href="register.html">Register</a></li>
-            <li><a href="gallery.html">Gallery</a></li>
-            <li><a href="contact.html">Contact</a></li>
-            <li><a href="admin.html">Admin</a></li>
-        </ul>
-    </nav>
-
-    <div class="container">
-        <h2>Event Registration</h2>
-        <form id="registrationForm">
-            <div>
-                <input type="text" id="fullname" placeholder="Full Name" required>
-                <div class="error" id="nameError"></div>
-            </div>
-            <div>
-                <input type="email" id="email" placeholder="Email" required>
-                <div class="error" id="emailError"></div>
-            </div>
-            <div>
-                <input type="tel" id="phone" placeholder="Phone (03xxxxxxxxx)" required>
-                <div class="error" id="phoneError"></div>
-            </div>
-            <div>
-                <select id="event" required>
-                    <option value="">Select Event</option>
-                    <option value="Tech Conference 2026">Tech Conference 2026 - 1500 PKR</option>
-                    <option value="AI Workshop">AI Workshop - 1000 PKR</option>
-                    <option value="Networking Night">Networking Night - 500 PKR</option>
-                </select>
-                <div class="error" id="eventError"></div>
-            </div>
-            <div>
-                <input type="text" id="fee" readonly placeholder="Fee will appear here">
-            </div>
-            <div>
-                <label>
-                    <input type="checkbox" id="agree" required>
-                    I confirm I will pay the registration fee
-                </label>
-                <div class="error" id="agreeError"></div>
-            </div>
-            <button type="submit" id="submitBtn">Register Now</button>
-        </form>
+  <header class="site-header">
+    <div class="container nav-container">
+      <a class="brand" href="index.html">Streamline Events</a>
+      <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
+      <nav class="main-nav">
+        <a href="index.html">Home</a>
+        <a href="events.html">Events</a>
+        <a href="register.html">Register</a>
+        <a href="gallery.html">Gallery</a>
+        <a href="contact.html">Contact</a>
+        <a href="admin.html">Admin</a>
+      </nav>
     </div>
+  </header>
 
-    <script>
-        // Fee update on event selection
-        const eventSelect = document.getElementById('event');
-        const feeInput = document.getElementById('fee');
-        const feeMap = {
-            'Tech Conference 2026': '1500 PKR',
-            'AI Workshop': '1000 PKR',
-            'Networking Night': '500 PKR'
-        };
-        eventSelect.addEventListener('change', () => {
-            feeInput.value = feeMap[eventSelect.value] || '';
-        });
+  <main>
+    <section class="page-hero registration-hero">
+      <div class="container">
+        <h1>Event Registration</h1>
+        <p>Fill the form, choose your event, and complete the payment simulation to get your QR code.</p>
+      </div>
+    </section>
 
-        // NOTE: WEBHOOK_URL is already defined in main.js as a global variable.
-        // We will use it directly (no const/let/var here).
+    <section class="container form-section">
+      <div class="form-card shadow">
+        <form id="registration-form" novalidate>
+          <label for="fullName">Full Name</label>
+          <input type="text" id="fullName" name="fullName" placeholder="Your full name" required />
+          <div class="error-message" id="fullNameError"></div>
 
-        // Form submission
-        document.getElementById('registrationForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            // Clear previous errors
-            document.querySelectorAll('.error').forEach(el => el.innerText = '');
-            
-            // Get values
-            const name = document.getElementById('fullname').value.trim();
-            const email = document.getElementById('email').value.trim();
-            const phone = document.getElementById('phone').value.trim();
-            const event = eventSelect.value;
-            const agree = document.getElementById('agree').checked;
-            const fee = feeInput.value;
-            
-            let isValid = true;
-            
-            // Validation
-            if (name.length < 3 || !/^[A-Za-z\s]+$/.test(name)) {
-                document.getElementById('nameError').innerText = 'Valid name (min 3 letters) required';
-                isValid = false;
-            }
-            if (!/^\S+@\S+\.\S+$/.test(email)) {
-                document.getElementById('emailError').innerText = 'Valid email required';
-                isValid = false;
-            }
-            if (!/^03[0-9]{9}$/.test(phone)) {
-                document.getElementById('phoneError').innerText = 'Phone must be 03xxxxxxxxx (11 digits)';
-                isValid = false;
-            }
-            if (!event) {
-                document.getElementById('eventError').innerText = 'Select an event';
-                isValid = false;
-            }
-            if (!agree) {
-                document.getElementById('agreeError').innerText = 'You must agree to pay fee';
-                isValid = false;
-            }
-            
-            if (!isValid) return;
-            
-            // Generate RegID and QR code using Google API
-            const regId = 'REG-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
-            const qrUrl = `https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl=${encodeURIComponent(regId)}`;
-            
-            // Save to localStorage
-            const registrations = JSON.parse(localStorage.getItem('registrations') || '[]');
-            registrations.push({
-                regId, name, email, phone, eventName: event, fee, qrCodeUrl: qrUrl,
-                paymentStatus: 'Pending', timestamp: new Date().toISOString()
-            });
-            localStorage.setItem('registrations', JSON.stringify(registrations));
-            
-            // Prepare webhook data
-            const payload = { name, email, phone, event, fee: fee.replace(' PKR','') };
-            
-            // Send to webhook (WEBHOOK_URL comes from main.js)
-            try {
-                const response = await fetch(WEBHOOK_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const text = await response.text();
-                if (response.ok) {
-                    alert('Registration successful! Check email for QR code (demo).');
-                } else {
-                    alert('Registration saved locally but automation failed. Please contact support.');
-                }
-            } catch (error) {
-                console.error('Webhook error:', error);
-                alert('Registration saved locally but automation failed. Please try again later.');
-            }
-            
-            // Reset form
-            document.getElementById('registrationForm').reset();
-            feeInput.value = '';
-        });
-    </script>
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" placeholder="you@example.com" required />
+          <div class="error-message" id="emailError"></div>
+
+          <label for="phone">Phone (03xxxxxxxxx)</label>
+          <input type="tel" id="phone" name="phone" placeholder="03001234567" required />
+          <div class="error-message" id="phoneError"></div>
+
+          <label for="eventSelect">Select Event</label>
+          <select id="eventSelect" name="eventSelect" required>
+            <option value="">-- Choose an event --</option>
+          </select>
+          <div class="error-message" id="eventError"></div>
+
+          <div class="fee-display">
+            <strong>Event Fee: <span id="eventFee">PKR 0</span></strong>
+          </div>
+
+          <label class="checkbox-label">
+            <input type="checkbox" id="agreement" name="agreement" />
+            I confirm I will pay the registration fee
+          </label>
+          <div class="error-message" id="agreementError"></div>
+
+          <button type="submit" id="submitBtn" class="btn btn-primary" disabled>Submit Registration</button>
+          <div id="registration-status" class="form-note"></div>
+        </form>
+      </div>
+
+      <div class="qr-card shadow">
+        <div class="ticket-decor" style="background-image: url('assets/images/ticket-bg.jpg');"></div>
+        <h2>Your QR Code</h2>
+        <p>After registration, your personalized QR code will appear here.</p>
+        <div id="qrCodeContainer" class="qr-preview">
+          <p>✨ Complete registration to see your QR code ✨</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div>
+        <h3>Streamline Events</h3>
+        <p>Delivering elegant event experiences with automation, QR capabilities, and support built in.</p>
+      </div>
+      <div>
+        <h4>Contact</h4>
+        <p>Email: <a href="mailto:support@streamlineevents.com">support@streamlineevents.com</a></p>
+        <p>Location: Lahore, Pakistan</p>
+      </div>
+      <div>
+        <h4>Follow</h4>
+        <p><a href="#"><i class="fa-brands fa-facebook-f"></i> Facebook</a></p>
+        <p><a href="#"><i class="fa-brands fa-instagram"></i> Instagram</a></p>
+      </div>
+    </div>
+    <div class="footer-note">© 2026 Streamline Events. All rights reserved.</div>
+  </footer>
+
+  <!-- Payment Modal (Easypaisa simulation) -->
+  <div id="paymentModal" class="modal" aria-hidden="true">
+    <div class="modal-dialog">
+      <button class="modal-close" id="paymentModalClose">&times;</button>
+      <div class="modal-header">
+        <div class="payment-brand">
+          <div class="payment-logo"><i class="fa-brands fa-easypaisa"></i> Easypaisa</div>
+          <small>Test Mode (Demo)</small>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div class="modal-row">
+          <label>Mobile Number</label>
+          <input type="tel" id="paymentMobile" placeholder="03XXXXXXXXX" />
+          <div class="error-message" id="paymentMobileError"></div>
+        </div>
+        <div class="modal-row">
+          <strong>Amount: <span id="paymentModalAmount">PKR 0</span></strong>
+        </div>
+        <div class="payment-note">*This is a simulated payment. No actual transaction occurs.</div>
+        <button class="btn btn-primary" id="paymentConfirmBtn">Confirm Payment</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    window.botpressWebchat = { botId: 'YOUR_BOTPRESS_BOT_ID', host: 'https://cdn.botpress.com' };
+  </script>
+  <script src="https://cdn.botpress.com/webchat/v0/inject.js"></script>
 </body>
 </html>
