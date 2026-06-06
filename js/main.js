@@ -1,345 +1,823 @@
-// Shared JavaScript for Streamline Events pages
-const webhookUrl = 'https://hook.make.com/YOUR_WEBHOOK_ID';
+const WEBHOOK_URL = 'https://hook.make.com/YOUR_WEBHOOK_ID'; // Replace with actual webhook URL
 
-// ============ VALIDATION FUNCTIONS ============
-function validateFullName(name) {
-  const trimmed = name.trim();
-  if (!/^[a-zA-Z\s]{3,}$/.test(trimmed)) return false;
-  return true;
-}
-
-function validateEmail(email) {
-  return /^[^\s@]+@[^\s@.]+\.[^\s@]+$/.test(email.trim());
-}
-
-function validatePakistanPhone(phone) {
-  const cleaned = phone.replace(/\D/g, '');
-  return /^923\d{9}$/.test(cleaned) && cleaned.length === 12;
-}
-
-function validateEventSelect(event) {
-  return event !== '' && event !== null;
-}
-
-// ============ LOCAL STORAGE FUNCTIONS ============
-function initializeLocalStorage() {
-  if (!localStorage.getItem('events')) {
-    const defaultEvents = [
-      { id: 1, name: 'Tech Conference 2026', date: '2026-12-10', location: 'Lahore Expo Center', capacity: 500, description: 'Industry tech leaders and networking' },
-      { id: 2, name: 'AI Workshop', date: '2026-12-15', location: 'Digital Hub Lahore', capacity: 100, description: 'Hands-on AI techniques and tools' },
-      { id: 3, name: 'Networking Night', date: '2026-12-20', location: 'The Skyline Lounge', capacity: 200, description: 'Entrepreneurs and creatives' },
-      { id: 4, name: 'Leadership Summit', date: '2027-01-05', location: 'City Conference Hall', capacity: 300, description: 'Executive leadership focus' }
-    ];
-    localStorage.setItem('events', JSON.stringify(defaultEvents));
-  }
-
-  if (!localStorage.getItem('registrations')) {
-    const defaultRegs = [
-      { regId: 'REG-001', name: 'Ayesha Khan', email: 'ayesha@example.com', phone: '03001234567', event: 'Tech Conference 2026', qrUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=REG-001', timestamp: new Date().toISOString() },
-      { regId: 'REG-002', name: 'Faisal Ahmed', email: 'faisal@example.com', phone: '03109876543', event: 'AI Workshop', qrUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=REG-002', timestamp: new Date().toISOString() }
-    ];
-    localStorage.setItem('registrations', JSON.stringify(defaultRegs));
-  }
-
-  if (!localStorage.getItem('attendance')) {
-    localStorage.setItem('attendance', JSON.stringify([]));
-  }
-}
-
-function getNextRegId() {
-  const regs = JSON.parse(localStorage.getItem('registrations') || '[]');
-  const highest = regs.reduce((max, r) => Math.max(max, parseInt(r.regId.split('-')[1]) || 0), 0);
-  return `REG-${String(highest + 1).padStart(3, '0')}`;
-}
-
-function saveRegistrationToLocalStorage(data) {
-  const regId = getNextRegId();
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(regId)}`;
-  
-  const registration = {
-    regId,
-    name: data.name,
-    email: data.email,
-    phone: data.phone,
-    event: data.event,
-    qrUrl,
-    timestamp: new Date().toISOString()
-  };
-
-  const existing = JSON.parse(localStorage.getItem('registrations') || '[]');
-  existing.push(registration);
-  localStorage.setItem('registrations', JSON.stringify(existing));
-  
-  return registration;
-}
-
-function getEvents() {
-  initializeLocalStorage();
-  return JSON.parse(localStorage.getItem('events') || '[]');
-}
-
-function getRegistrations() {
-  initializeLocalStorage();
-  return JSON.parse(localStorage.getItem('registrations') || '[]');
-}
-
-function getAttendance() {
-  initializeLocalStorage();
-  return JSON.parse(localStorage.getItem('attendance') || '[]');
-}
-
-function saveEvent(event) {
-  const events = getEvents();
-  if (event.id) {
-    const index = events.findIndex(e => e.id === event.id);
-    if (index > -1) events[index] = event;
-  } else {
-    event.id = Math.max(...events.map(e => e.id), 0) + 1;
-    events.push(event);
-  }
-  localStorage.setItem('events', JSON.stringify(events));
-  return event;
-}
-
-function deleteEvent(eventId) {
-  const events = getEvents().filter(e => e.id !== eventId);
-  localStorage.setItem('events', JSON.stringify(events));
-}
-
-function deleteRegistration(regId) {
-  const regs = getRegistrations().filter(r => r.regId !== regId);
-  localStorage.setItem('registrations', JSON.stringify(regs));
-}
-
-function markAttendance(regId, status) {
-  let attendance = getAttendance();
-  const existing = attendance.findIndex(a => a.regId === regId);
-  if (existing > -1) {
-    attendance[existing].status = status;
-  } else {
-    const reg = getRegistrations().find(r => r.regId === regId);
-    if (reg) {
-      attendance.push({ regId, name: reg.name, event: reg.event, status });
-    }
-  }
-  localStorage.setItem('attendance', JSON.stringify(attendance));
-}
-
-// ============ QR CODE & WEBHOOK ============
 function generateQrCodeUrl(regId) {
   const safeData = encodeURIComponent(regId);
   return `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${safeData}`;
 }
 
-async function sendToWebhook(data) {
+const defaultEvents = [
+  {
+    id: 'EVT-001',
+    name: 'Tech Conference 2026',
+    date: 'Dec 10, 2026',
+    time: '9:00 AM - 5:00 PM',
+    location: 'Expo Center',
+    capacity: 250,
+    description: 'Discover the latest technology trends, networking opportunities, and expert talks.',
+    fee: 1500,
+    image: 'assets/images/tech-conference.jpg',
+  },
+  {
+    id: 'EVT-002',
+    name: 'AI Workshop',
+    date: 'Dec 15, 2026',
+    time: '10:00 AM - 4:00 PM',
+    location: 'Tech Hub',
+    capacity: 120,
+    description: 'A hands-on workshop to learn practical AI tools and build empowered solutions.',
+    fee: 3000,
+    image: 'assets/images/ai-workshop.jpg',
+  },
+  {
+    id: 'EVT-003',
+    name: 'Networking Night',
+    date: 'Dec 20, 2026',
+    time: '7:00 PM - 11:00 PM',
+    location: 'Royal Palm',
+    capacity: 180,
+    description: 'Connect with entrepreneurs, creatives, and influencers in a refined evening setting.',
+    fee: 5000,
+    image: 'assets/images/networking-night.jpg',
+  },
+];
+
+const sampleRegistrations = [
+  {
+    regId: 'REG-001',
+    name: 'Ayesha Khan',
+    email: 'ayesha@example.com',
+    phone: '03001234567',
+    eventId: 'EVT-001',
+    eventName: 'Tech Conference 2026',
+    fee: 1500,
+    paymentStatus: 'Paid',
+    qrCodeUrl: generateQrCodeUrl('REG-001'),
+    timestamp: '2026-06-01T10:00:00Z',
+  },
+  {
+    regId: 'REG-002',
+    name: 'Bilal Shah',
+    email: 'bilal@example.com',
+    phone: '03009876543',
+    eventId: 'EVT-002',
+    eventName: 'AI Workshop',
+    fee: 3000,
+    paymentStatus: 'Pending',
+    qrCodeUrl: generateQrCodeUrl('REG-002'),
+    timestamp: '2026-06-02T11:30:00Z',
+  },
+];
+
+const sampleAttendance = [
+  { regId: 'REG-001', status: 'Present' },
+  { regId: 'REG-002', status: 'Absent' },
+];
+
+function getStorageArray(key, fallback) {
+  const raw = localStorage.getItem(key);
+  if (!raw) {
+    saveStorageArray(key, fallback);
+    return fallback.map((item) => ({ ...item }));
+  }
+
   try {
-    console.log('Sending to webhook:', data);
-    const response = await fetch(webhookUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    console.log('Webhook response status:', response.status);
-  } catch (error) {
-    console.warn('Webhook request failed:', error);
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : fallback.map((item) => ({ ...item }));
+  } catch {
+    saveStorageArray(key, fallback);
+    return fallback.map((item) => ({ ...item }));
   }
 }
 
-// ============ CSV EXPORT ============
-function exportToCSV(filename, headers, rows) {
-  let csv = headers.join(',') + '\n';
-  rows.forEach(row => {
-    csv += row.map(cell => `"${cell}"`).join(',') + '\n';
-  });
-  
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
-  window.URL.revokeObjectURL(url);
+function saveStorageArray(key, items) {
+  localStorage.setItem(key, JSON.stringify(items));
 }
 
-// ============ FORM VALIDATION & HANDLERS ============
-function validateForm(form) {
-  const inputs = Array.from(form.querySelectorAll('input, select, textarea'));
-  let isValid = true;
+function initData() {
+  const storedEvents = getStorageArray('events', defaultEvents);
+  const mergedEvents = [
+    ...defaultEvents.map((def) => {
+      const existing = storedEvents.find((item) => item.id === def.id);
+      return existing ? { ...existing, ...def } : def;
+    }),
+    ...storedEvents.filter((item) => !defaultEvents.some((def) => def.id === item.id)),
+  ];
+  saveStorageArray('events', mergedEvents);
+  getStorageArray('registrations', sampleRegistrations);
+  getStorageArray('attendance', sampleAttendance);
+}
 
-  inputs.forEach((input) => {
-    if (!input.checkValidity()) {
-      input.classList.add('input-error');
-      isValid = false;
+function getEvents() {
+  return getStorageArray('events', defaultEvents);
+}
+
+function getRegistrations() {
+  return getStorageArray('registrations', sampleRegistrations);
+}
+
+function getAttendance() {
+  return getStorageArray('attendance', sampleAttendance);
+}
+
+function saveRegistration(registration) {
+  const registrations = getRegistrations();
+  registrations.push(registration);
+  saveStorageArray('registrations', registrations);
+}
+
+function updateAttendance(regId, status) {
+  const attendance = getAttendance();
+  const index = attendance.findIndex((item) => item.regId === regId);
+  if (index > -1) {
+    attendance[index].status = status;
+  } else {
+    attendance.push({ regId, status });
+  }
+  saveStorageArray('attendance', attendance);
+}
+
+function updateRegistrationPayment(regId) {
+  const registrations = getRegistrations();
+  const index = registrations.findIndex((item) => item.regId === regId);
+  if (index > -1) {
+    registrations[index].paymentStatus = 'Paid';
+    saveStorageArray('registrations', registrations);
+  }
+}
+
+function getEventById(id) {
+  return getEvents().find((event) => event.id === id);
+}
+
+function createRegistrationId() {
+  const registrations = getRegistrations();
+  const maxId = registrations.reduce((max, item) => {
+    const numeric = parseInt(item.regId.replace('REG-', ''), 10);
+    return Number.isNaN(numeric) ? max : Math.max(max, numeric);
+  }, 0);
+  return `REG-${String(maxId + 1).padStart(3, '0')}`;
+}
+
+function createEventId() {
+  const events = getEvents();
+  const maxId = events.reduce((max, item) => {
+    const numeric = parseInt(item.id.replace('EVT-', ''), 10);
+    return Number.isNaN(numeric) ? max : Math.max(max, numeric);
+  }, 0);
+  return `EVT-${String(maxId + 1).padStart(3, '0')}`;
+}
+
+function sendToWebhook(data) {
+  fetch(WEBHOOK_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  }).catch((error) => {
+    console.warn('Webhook request failed:', error);
+  });
+}
+
+function formatFee(amount) {
+  return `PKR ${Number(amount).toLocaleString('en-US')}`;
+}
+
+function validateName(value) {
+  return /^[A-Za-z ]{3,}$/.test(value.trim());
+}
+
+function validateEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+}
+
+function validatePakistanPhone(value) {
+  const cleaned = value.replace(/[-\s]/g, '');
+  return /^03\d{9}$/.test(cleaned);
+}
+
+function setupNavigation() {
+  const toggle = document.querySelector('.nav-toggle');
+  const body = document.body;
+  const navLinks = document.querySelectorAll('.main-nav a');
+
+  if (!toggle) return;
+
+  toggle.addEventListener('click', () => {
+    const expanded = toggle.getAttribute('aria-expanded') === 'true';
+    toggle.setAttribute('aria-expanded', (!expanded).toString());
+    body.classList.toggle('nav-open');
+  });
+
+  navLinks.forEach((link) => {
+    link.addEventListener('click', () => {
+      body.classList.remove('nav-open');
+      toggle.setAttribute('aria-expanded', 'false');
+    });
+  });
+}
+
+function bindRegisterPage() {
+  const registrationForm = document.getElementById('registration-form');
+  if (!registrationForm) return;
+
+  const fullNameInput = document.getElementById('fullName');
+  const emailInput = document.getElementById('email');
+  const phoneInput = document.getElementById('phone');
+  const eventSelect = document.getElementById('eventSelect');
+  const agreementInput = document.getElementById('agreement');
+  const eventFeeLabel = document.getElementById('eventFee');
+  const submitBtn = document.getElementById('submitBtn');
+  const registrationStatus = document.getElementById('registration-status');
+  const qrCodeContainer = document.getElementById('qrCodeContainer');
+  const paymentModal = document.getElementById('paymentModal');
+  const paymentModalClose = document.getElementById('paymentModalClose');
+  const paymentMobileInput = document.getElementById('paymentMobile');
+  const paymentModalAmount = document.getElementById('paymentModalAmount');
+  const paymentConfirmBtn = document.getElementById('paymentConfirmBtn');
+  const paymentMobileError = document.getElementById('paymentMobileError');
+
+  let currentRegistration = null;
+
+  function renderEventOptions() {
+    const events = getEvents();
+    events.forEach((event) => {
+      const option = document.createElement('option');
+      option.value = event.id;
+      option.textContent = `${event.name} • ${event.date} • ${event.time} • ${formatFee(event.fee)}`;
+      eventSelect.appendChild(option);
+    });
+  }
+
+  function updateFeeLabel() {
+    const event = getEventById(eventSelect.value);
+    eventFeeLabel.textContent = event ? formatFee(event.fee) : 'PKR 0';
+  }
+
+  function setError(elementId, message) {
+    const element = document.getElementById(elementId);
+    if (element) element.textContent = message;
+  }
+
+  function validateRegistrationForm() {
+    const nameValid = validateName(fullNameInput.value);
+    const emailValid = validateEmail(emailInput.value);
+    const phoneValid = validatePakistanPhone(phoneInput.value);
+    const eventValid = eventSelect.value !== '';
+    const agreementValid = agreementInput.checked;
+
+    setError('fullNameError', !nameValid ? 'Full Name must be 3+ letters and spaces only.' : '');
+    setError('emailError', !emailValid ? 'Enter a valid email address.' : '');
+    setError('phoneError', !phoneValid ? 'Use Pakistan phone format 03xxxxxxxxx.' : '');
+    setError('eventError', !eventValid ? 'Please select an event.' : '');
+    setError('agreementError', !agreementValid ? 'You must confirm the registration fee.' : '');
+
+    submitBtn.disabled = !(nameValid && emailValid && phoneValid && eventValid && agreementValid);
+    submitBtn.style.opacity = submitBtn.disabled ? '0.5' : '1';
+    submitBtn.style.cursor = submitBtn.disabled ? 'not-allowed' : 'pointer';
+
+    return !submitBtn.disabled;
+  }
+
+  function openPaymentModal(registration) {
+    currentRegistration = registration;
+    if (!paymentModal || !paymentModalAmount) return;
+    paymentModalAmount.textContent = formatFee(registration.fee);
+    paymentMobileInput.value = '';
+    paymentMobileError.textContent = '';
+    paymentModal.classList.add('active');
+    paymentModal.setAttribute('aria-hidden', 'false');
+  }
+
+  function closePaymentModal() {
+    if (!paymentModal) return;
+    paymentModal.classList.remove('active');
+    paymentModal.setAttribute('aria-hidden', 'true');
+  }
+
+  function handlePaymentConfirmation() {
+    if (!paymentMobileInput) return;
+
+    const phoneValue = paymentMobileInput.value.trim();
+    if (!validatePakistanPhone(phoneValue)) {
+      paymentMobileError.textContent = 'Enter a valid Pakistan mobile number.';
+      return;
+    }
+
+    paymentConfirmBtn.disabled = true;
+    paymentConfirmBtn.textContent = 'Processing...';
+
+    setTimeout(() => {
+      if (currentRegistration) {
+        updateRegistrationPayment(currentRegistration.regId);
+        updateAttendance(currentRegistration.regId, 'Absent');
+      }
+
+      paymentConfirmBtn.disabled = false;
+      paymentConfirmBtn.textContent = 'Confirm Payment';
+      closePaymentModal();
+      alert('Payment successful (Demo)');
+    }, 2000);
+  }
+
+  renderEventOptions();
+  updateFeeLabel();
+  validateRegistrationForm();
+
+  fullNameInput.addEventListener('input', validateRegistrationForm);
+  emailInput.addEventListener('input', validateRegistrationForm);
+  phoneInput.addEventListener('input', validateRegistrationForm);
+  eventSelect.addEventListener('change', () => {
+    updateFeeLabel();
+    validateRegistrationForm();
+  });
+  agreementInput.addEventListener('change', validateRegistrationForm);
+
+  registrationForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (!validateRegistrationForm()) return;
+
+    const selectedEvent = getEventById(eventSelect.value);
+    if (!selectedEvent) return;
+
+    const registrationId = createRegistrationId();
+    const registration = {
+      regId: registrationId,
+      name: fullNameInput.value.trim(),
+      email: emailInput.value.trim(),
+      phone: phoneInput.value.trim(),
+      eventId: selectedEvent.id,
+      eventName: selectedEvent.name,
+      fee: selectedEvent.fee,
+      paymentStatus: selectedEvent.fee > 0 ? 'Pending' : 'Paid',
+      qrCodeUrl: generateQrCodeUrl(registrationId),
+      timestamp: new Date().toISOString(),
+    };
+    saveRegistration(registration);
+    updateAttendance(registration.regId, 'Absent');
+    sendToWebhook(registration);
+
+    registrationStatus.textContent = 'Registration successful! Check email for QR code';
+    qrCodeContainer.innerHTML = `
+      <img src="${registration.qrCodeUrl}" alt="QR code for ${registration.regId}" />
+      <p class="qr-note">Save or screenshot your QR code.</p>
+    `;
+
+    registrationForm.reset();
+    eventFeeLabel.textContent = 'PKR 0';
+    submitBtn.disabled = true;
+    submitBtn.style.opacity = '0.5';
+    submitBtn.style.cursor = 'not-allowed';
+
+    if (selectedEvent.fee > 0) {
+      alert('Registration successful! Check email for QR code');
+      openPaymentModal(registration);
     } else {
-      input.classList.remove('input-error');
+      alert('Registration successful! Check email for QR code');
     }
   });
 
-  return isValid;
+  if (paymentModalClose) {
+    paymentModalClose.addEventListener('click', closePaymentModal);
+  }
+
+  if (paymentConfirmBtn) {
+    paymentConfirmBtn.addEventListener('click', handlePaymentConfirmation);
+  }
 }
 
-async function handleRegistrationSubmit(event) {
-  event.preventDefault();
-  const form = event.target;
-  
-  const name = form.fullName.value.trim();
-  const email = form.email.value.trim();
-  const phone = form.phone.value.trim();
-  const event_name = form.eventSelect.value;
+function bindContactPage() {
+  const contactForm = document.getElementById('contact-form');
+  if (!contactForm) return;
 
-  // Validate each field
-  let isValid = true;
-  if (!validateFullName(name)) {
-    form.fullName.classList.add('input-error');
-    isValid = false;
-  } else {
-    form.fullName.classList.remove('input-error');
+  const contactName = document.getElementById('contactName');
+  const contactEmail = document.getElementById('contactEmail');
+  const contactMessage = document.getElementById('contactMessage');
+
+  function setError(elementId, message) {
+    const element = document.getElementById(elementId);
+    if (element) element.textContent = message;
   }
 
-  if (!validateEmail(email)) {
-    form.email.classList.add('input-error');
-    isValid = false;
-  } else {
-    form.email.classList.remove('input-error');
+  function validateContactForm() {
+    let valid = true;
+    setError('contactNameError', '');
+    setError('contactEmailError', '');
+    setError('contactMessageError', '');
+
+    if (!contactName.value.trim()) {
+      setError('contactNameError', 'Name is required.');
+      valid = false;
+    }
+    if (!validateEmail(contactEmail.value)) {
+      setError('contactEmailError', 'Enter a valid email address.');
+      valid = false;
+    }
+    if (!contactMessage.value.trim()) {
+      setError('contactMessageError', 'Message cannot be blank.');
+      valid = false;
+    }
+
+    return valid;
   }
 
-  if (!validatePakistanPhone(phone)) {
-    form.phone.classList.add('input-error');
-    isValid = false;
-  } else {
-    form.phone.classList.remove('input-error');
-  }
+  contactForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (!validateContactForm()) return;
 
-  if (!validateEventSelect(event_name)) {
-    form.eventSelect.classList.add('input-error');
-    isValid = false;
-  } else {
-    form.eventSelect.classList.remove('input-error');
-  }
+    const contactData = {
+      name: contactName.value.trim(),
+      email: contactEmail.value.trim(),
+      message: contactMessage.value.trim(),
+      timestamp: new Date().toISOString(),
+    };
 
-  if (!isValid) {
-    alert('Please fill all fields with valid information.');
-    return;
-  }
-
-  const formData = {
-    name,
-    email,
-    phone,
-    event: event_name,
-    timestamp: new Date().toISOString(),
-  };
-
-  const reg = saveRegistrationToLocalStorage(formData);
-  await sendToWebhook(formData);
-
-  alert('Form validated successfully');
-  console.log('Registration saved:', reg);
-
-  const status = document.querySelector('#registration-status');
-  const qrContainer = document.querySelector('#qrCodeContainer');
-
-  if (status) {
-    status.textContent = `Registration successful! Your ID: ${reg.regId}`;
-  }
-
-  if (qrContainer) {
-    qrContainer.innerHTML = `
-      <img src="${reg.qrUrl}" alt="Registration QR code" style="max-width: 200px; margin: 1rem auto;" />
-      <p class="qr-note">Registration ID: <strong>${reg.regId}</strong></p>
-      <p class="qr-note">Save this QR code or view it in your confirmation email.</p>
-    `;
-  }
-
-  form.reset();
-}
-
-async function handleContactSubmit(event) {
-  event.preventDefault();
-  const form = event.target;
-  if (!validateForm(form)) {
-    alert('Please fill out all contact fields.');
-    return;
-  }
-
-  const contactData = {
-    name: form.contactName.value.trim(),
-    email: form.contactEmail.value.trim(),
-    message: form.contactMessage.value.trim(),
-    timestamp: new Date().toISOString(),
-  };
-
-  console.log('Contact message submitted:', contactData);
-  await sendToWebhook(contactData);
-
-  alert('Thank you! Your message has been sent successfully.');
-  form.reset();
-}
-
-function handleAttendanceScan() {
-  const scanInput = document.querySelector('#scanInput');
-  if (!scanInput || !scanInput.value.trim()) {
-    alert('Enter a valid registration code to mark attendance.');
-    return;
-  }
-
-  const code = scanInput.value.trim();
-  alert(`Attendance marked for ${code}.`);
-  scanInput.value = '';
-}
-
-// ============ ADMIN TABLE RENDERING ============
-function populateAdminTable() {
-  const tableBody = document.querySelector('#registrationTableBody');
-  if (!tableBody) return;
-
-  tableBody.innerHTML = '';
-  const registrations = getRegistrations();
-
-  registrations.forEach((registration) => {
-    const row = document.createElement('tr');
-    row.innerHTML = `
-      <td>${registration.regId}</td>
-      <td>${registration.name}</td>
-      <td>${registration.email}</td>
-      <td>${registration.event}</td>
-      <td><span class="badge badge-success">Registered</span></td>
-    `;
-    tableBody.appendChild(row);
+    sendToWebhook(contactData);
+    alert('Thank you! Your message has been sent successfully.');
+    contactForm.reset();
   });
 }
 
-// ============ PAGE INITIALIZATION ============
-function attachPageHandlers() {
-  const registrationForm = document.querySelector('#registration-form');
-  if (registrationForm) {
-    registrationForm.addEventListener('submit', handleRegistrationSubmit);
+function validateAdminAccess() {
+  if (sessionStorage.getItem('adminAccess') === 'granted') return true;
+  const password = prompt('Enter admin password:');
+  if (password === 'admin123') {
+    sessionStorage.setItem('adminAccess', 'granted');
+    return true;
   }
+  window.location.href = 'index.html';
+  return false;
+}
 
-  const contactForm = document.querySelector('#contact-form');
-  if (contactForm) {
-    contactForm.addEventListener('submit', handleContactSubmit);
-  }
+function bindAdminPage() {
+  const eventTableBody = document.getElementById('eventTableBody');
+  if (!eventTableBody) return;
+  if (!validateAdminAccess()) return;
 
-  const markAttendanceBtn = document.querySelector('#markAttendanceBtn');
-  if (markAttendanceBtn) {
-    markAttendanceBtn.addEventListener('click', handleAttendanceScan);
-  }
+  const registrationTableBody = document.getElementById('registrationTableBody');
+  const attendanceTableBody = document.getElementById('attendanceTableBody');
+  const registrationFilter = document.getElementById('registrationFilter');
+  const exportCsvBtn = document.getElementById('exportCsvBtn');
+  const markPresentBtn = document.getElementById('markPresentBtn');
+  const adminScanInput = document.getElementById('adminScanInput');
+  const totalEventsEl = document.getElementById('totalEvents');
+  const totalRegistrationsEl = document.getElementById('totalRegistrations');
+  const totalPresentEl = document.getElementById('totalPresent');
+  const totalPendingEl = document.getElementById('totalPending');
+  const attendanceCounts = document.getElementById('attendanceCounts');
+  const registrationChartCanvas = document.getElementById('registrationChart');
+  const eventForm = document.getElementById('eventForm');
+  const eventIdInput = document.getElementById('eventId');
+  const eventNameInput = document.getElementById('eventName');
+  const eventDateInput = document.getElementById('eventDate');
+  const eventTimeInput = document.getElementById('eventTime');
+  const eventLocationInput = document.getElementById('eventLocation');
+  const eventCapacityInput = document.getElementById('eventCapacity');
+  const eventDescriptionInput = document.getElementById('eventDescription');
+  const eventFeeInput = document.getElementById('eventFee');
+  const saveEventBtn = document.getElementById('saveEventBtn');
+  const resetEventBtn = document.getElementById('resetEventBtn');
+  let registrationChart = null;
 
-  populateAdminTable();
-
-  // Mobile nav toggle
-  const navToggle = document.querySelector('.nav-toggle');
-  const mainNav = document.querySelector('.main-nav');
-  if (navToggle && mainNav) {
-    navToggle.addEventListener('click', () => {
-      const isOpen = mainNav.classList.toggle('open');
-      navToggle.setAttribute('aria-expanded', isOpen);
+  function renderEventOptions() {
+    const events = getEvents();
+    registrationFilter.innerHTML = '<option value="">All events</option>';
+    events.forEach((event) => {
+      const option = document.createElement('option');
+      option.value = event.id;
+      option.textContent = event.name;
+      registrationFilter.appendChild(option);
     });
   }
 
-  // Initialize localStorage
-  initializeLocalStorage();
+  function renderEventTable() {
+    const events = getEvents();
+    eventTableBody.innerHTML = '';
+    events.forEach((event) => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${event.id}</td>
+        <td>${event.name}</td>
+        <td>${event.date}</td>
+        <td>${event.time}</td>
+        <td>${event.location}</td>
+        <td>${event.capacity}</td>
+        <td>${formatFee(event.fee)}</td>
+        <td class="table-actions">
+          <button class="btn btn-small btn-secondary" data-action="edit" data-id="${event.id}">Edit</button>
+          <button class="btn btn-small btn-secondary" data-action="delete" data-id="${event.id}">Delete</button>
+        </td>
+      `;
+      eventTableBody.appendChild(row);
+    });
+  }
+
+  function clearEventForm() {
+    eventIdInput.value = '';
+    eventNameInput.value = '';
+    eventDateInput.value = '';
+    eventTimeInput.value = '';
+    eventLocationInput.value = '';
+    eventCapacityInput.value = '';
+    eventDescriptionInput.value = '';
+    eventFeeInput.value = '';
+    saveEventBtn.textContent = 'Add Event';
+  }
+
+  function loadEventIntoForm(eventId) {
+    const event = getEventById(eventId);
+    if (!event) return;
+    eventIdInput.value = event.id;
+    eventNameInput.value = event.name;
+    eventDateInput.value = event.date;
+    eventTimeInput.value = event.time;
+    eventLocationInput.value = event.location;
+    eventCapacityInput.value = event.capacity;
+    eventDescriptionInput.value = event.description;
+    eventFeeInput.value = event.fee;
+    saveEventBtn.textContent = 'Save Event';
+  }
+
+  function saveEvent(event) {
+    event.preventDefault();
+    const eventName = eventNameInput.value.trim();
+    const eventDate = eventDateInput.value.trim();
+    const eventTime = eventTimeInput.value.trim();
+    const eventLocation = eventLocationInput.value.trim();
+    const eventCapacity = Number(eventCapacityInput.value);
+    const eventDescription = eventDescriptionInput.value.trim();
+    const eventFee = Number(eventFeeInput.value);
+
+    if (!eventName || !eventDate || !eventTime || !eventLocation || !eventCapacity || !eventDescription || Number.isNaN(eventFee)) {
+      alert('Please complete all event fields.');
+      return;
+    }
+
+    const events = getEvents();
+    if (eventIdInput.value) {
+      const index = events.findIndex((item) => item.id === eventIdInput.value);
+      if (index > -1) {
+        events[index] = {
+          ...events[index],
+          name: eventName,
+          date: eventDate,
+          time: eventTime,
+          location: eventLocation,
+          capacity: eventCapacity,
+          description: eventDescription,
+          fee: eventFee,
+        };
+      }
+    } else {
+      events.push({
+        id: createEventId(),
+        name: eventName,
+        date: eventDate,
+        time: eventTime,
+        location: eventLocation,
+        capacity: eventCapacity,
+        description: eventDescription,
+        fee: eventFee,
+        image: 'assets/images/hero-banner.jpg',
+      });
+    }
+
+    saveStorageArray('events', events);
+    clearEventForm();
+    refreshAdminViews();
+  }
+
+  function deleteEvent(eventId) {
+    if (!confirm('Delete this event? This will not remove existing registrations.')) return;
+    const events = getEvents().filter((item) => item.id !== eventId);
+    saveStorageArray('events', events);
+    refreshAdminViews();
+  }
+
+  function renderRegistrationTable() {
+    const registrations = getRegistrations();
+    const filterValue = registrationFilter.value;
+    registrationTableBody.innerHTML = '';
+
+    registrations
+      .filter((registration) => !filterValue || registration.eventId === filterValue)
+      .forEach((registration) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${registration.regId}</td>
+          <td>${registration.name}</td>
+          <td>${registration.email}</td>
+          <td>${registration.phone}</td>
+          <td>${registration.eventName}</td>
+          <td>${formatFee(registration.fee)}</td>
+          <td>${registration.paymentStatus}</td>
+          <td><a href="${registration.qrCodeUrl}" target="_blank" rel="noreferrer">View</a></td>
+          <td class="table-actions">
+            <button class="btn btn-small btn-secondary" data-action="mark-paid" data-id="${registration.regId}">Mark Paid</button>
+            <button class="btn btn-small btn-secondary" data-action="delete-registration" data-id="${registration.regId}">Delete</button>
+          </td>
+        `;
+        registrationTableBody.appendChild(row);
+      });
+  }
+
+  function renderAttendanceTable() {
+    const registrations = getRegistrations();
+    const attendance = getAttendance();
+    attendanceTableBody.innerHTML = '';
+
+    attendance.forEach((record) => {
+      const registration = registrations.find((item) => item.regId === record.regId) || {};
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${record.regId}</td>
+        <td>${registration.name || '-'}</td>
+        <td>${registration.eventName || '-'}</td>
+        <td>${record.status}</td>
+        <td><button class="btn btn-small btn-secondary" data-action="toggle-attendance" data-id="${record.regId}">Toggle</button></td>
+      `;
+      attendanceTableBody.appendChild(row);
+    });
+  }
+
+  function renderAttendanceCounts() {
+    const events = getEvents();
+    const registrations = getRegistrations();
+    const attendance = getAttendance();
+
+    const counts = events.map((event) => {
+      const eventRegistrations = registrations.filter((registration) => registration.eventId === event.id);
+      const present = attendance.filter((record) => eventRegistrations.some((reg) => reg.regId === record.regId) && record.status === 'Present').length;
+      return { title: event.name, present, total: eventRegistrations.length };
+    });
+
+    attendanceCounts.innerHTML = counts
+      .map(
+        (item) => `<div class="attendance-count-card"><strong>${item.title}</strong><span>${item.present}/${item.total} Present</span></div>`
+      )
+      .join('');
+  }
+
+  function refreshAdminViews() {
+    renderEventOptions();
+    renderEventTable();
+    renderRegistrationTable();
+    renderAttendanceTable();
+    renderAttendanceCounts();
+    renderDashboardStats();
+    renderRegistrationChart();
+  }
+
+  function renderDashboardStats() {
+    const events = getEvents();
+    const registrations = getRegistrations();
+    const attendance = getAttendance();
+
+    totalEventsEl.textContent = events.length;
+    totalRegistrationsEl.textContent = registrations.length;
+    totalPresentEl.textContent = attendance.filter((item) => item.status === 'Present').length;
+    const pendingTotal = registrations
+      .filter((registration) => registration.paymentStatus !== 'Paid')
+      .reduce((sum, registration) => sum + Number(registration.fee), 0);
+    totalPendingEl.textContent = formatFee(pendingTotal);
+  }
+
+  function renderRegistrationChart() {
+    const events = getEvents();
+    const registrations = getRegistrations();
+    const labels = events.map((event) => event.name);
+    const data = events.map((event) => registrations.filter((reg) => reg.eventId === event.id).length);
+
+    if (registrationChart) {
+      registrationChart.destroy();
+    }
+
+    registrationChart = new Chart(registrationChartCanvas, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Registrations',
+            data,
+            backgroundColor: 'rgba(198, 164, 63, 0.7)',
+            borderColor: 'rgba(26, 42, 79, 0.9)',
+            borderWidth: 1,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              stepSize: 1,
+            },
+          },
+        },
+      },
+    });
+  }
+
+  function exportRegistrationsCsv() {
+    const registrations = getRegistrations();
+    const headers = ['Reg ID', 'Name', 'Email', 'Phone', 'Event', 'Fee', 'Payment Status', 'QR Code URL', 'Timestamp'];
+    const rows = registrations.map((registration) => [
+      registration.regId,
+      registration.name,
+      registration.email,
+      registration.phone,
+      registration.eventName,
+      registration.fee,
+      registration.paymentStatus,
+      registration.qrCodeUrl,
+      registration.timestamp,
+    ]);
+
+    const csvContent = [headers, ...rows].map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'streamline-events-registrations.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
+  function handleMarkPresent() {
+    const regId = adminScanInput.value.trim();
+    if (!regId) {
+      alert('Enter a valid registration ID.');
+      return;
+    }
+
+    const attendance = getAttendance();
+    const registrationExists = getRegistrations().some((reg) => reg.regId === regId);
+    if (!registrationExists) {
+      alert('Registration code not found.');
+      return;
+    }
+
+    updateAttendance(regId, 'Present');
+    adminScanInput.value = '';
+    refreshAdminViews();
+    alert(`${regId} marked present.`);
+  }
+
+  eventForm.addEventListener('submit', saveEvent);
+  resetEventBtn.addEventListener('click', clearEventForm);
+  registrationFilter.addEventListener('change', renderRegistrationTable);
+  exportCsvBtn.addEventListener('click', exportRegistrationsCsv);
+  markPresentBtn.addEventListener('click', handleMarkPresent);
+
+  eventTableBody.addEventListener('click', (event) => {
+    const button = event.target.closest('button');
+    if (!button) return;
+    const action = button.dataset.action;
+    const id = button.dataset.id;
+    if (action === 'edit') loadEventIntoForm(id);
+    if (action === 'delete') deleteEvent(id);
+  });
+
+  registrationTableBody.addEventListener('click', (event) => {
+    const button = event.target.closest('button');
+    if (!button) return;
+    const action = button.dataset.action;
+    const id = button.dataset.id;
+    if (action === 'mark-paid') {
+      updateRegistrationPayment(id);
+      refreshAdminViews();
+    }
+    if (action === 'delete-registration') {
+      const registrations = getRegistrations().filter((registration) => registration.regId !== id);
+      saveStorageArray('registrations', registrations);
+      refreshAdminViews();
+    }
+  });
+
+  attendanceTableBody.addEventListener('click', (event) => {
+    const button = event.target.closest('button');
+    if (!button) return;
+    const action = button.dataset.action;
+    const id = button.dataset.id;
+    if (action === 'toggle-attendance') {
+      const attendance = getAttendance();
+      const entry = attendance.find((record) => record.regId === id);
+      if (entry) {
+        updateAttendance(id, entry.status === 'Present' ? 'Absent' : 'Present');
+        refreshAdminViews();
+      }
+    }
+  });
+
+  refreshAdminViews();
 }
 
-window.addEventListener('DOMContentLoaded', attachPageHandlers);
+window.addEventListener('DOMContentLoaded', () => {
+  initData();
+  setupNavigation();
+  bindRegisterPage();
+  bindContactPage();
+  bindAdminPage();
+});

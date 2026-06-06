@@ -27,19 +27,19 @@
   </header>
 
   <main>
-    <section class="page-hero">
+    <section class="page-hero registration-hero">
       <div class="container">
         <h1>Register for an Event</h1>
-        <p>Fill out your details and choose an event to secure your spot. QR code will be generated after submission.</p>
+        <p>Complete the form below to secure your spot with a QR-ready confirmation.</p>
       </div>
     </section>
 
     <section class="container form-section">
-      <div class="form-card">
+      <div class="form-card shadow">
         <h2>Registration Form</h2>
-        <form id="registration-form">
+        <form id="registration-form" novalidate>
           <label for="fullName">Full Name <span class="required">*</span></label>
-          <input type="text" id="fullName" name="fullName" placeholder="Enter your full name (letters & spaces, min 3)" required />
+          <input type="text" id="fullName" name="fullName" placeholder="Enter your full name" required />
           <div class="error-message" id="fullNameError"></div>
 
           <label for="email">Email Address <span class="required">*</span></label>
@@ -47,29 +47,58 @@
           <div class="error-message" id="emailError"></div>
 
           <label for="phone">Phone Number (Pakistan format) <span class="required">*</span></label>
-          <input type="tel" id="phone" name="phone" placeholder="03xx-xxxxxxx or 03xxxxxxxxx (11 digits)" required />
+          <input type="tel" id="phone" name="phone" placeholder="03xxxxxxxxx" required />
           <div class="error-message" id="phoneError"></div>
 
           <label for="eventSelect">Select Event <span class="required">*</span></label>
           <select id="eventSelect" name="eventSelect" required>
             <option value="">Choose an event</option>
-            <option value="Tech Conference 2026">Tech Conference 2026</option>
-            <option value="AI Workshop">AI Workshop</option>
-            <option value="Networking Night">Networking Night</option>
-            <option value="Leadership Summit">Leadership Summit</option>
           </select>
           <div class="error-message" id="eventError"></div>
 
-          <button type="submit" class="btn btn-primary" id="submitBtn">Submit Registration</button>
+          <div class="fee-display">Registration Fee: <span id="eventFee">PKR 0</span></div>
+
+          <label class="checkbox-label"><input type="checkbox" id="agreement" required /> I confirm I will pay the registration fee <span class="required">*</span></label>
+          <div class="error-message" id="agreementError"></div>
+
+          <button type="submit" class="btn btn-primary" id="submitBtn" disabled>Submit Registration</button>
         </form>
         <p class="form-note"><span class="required">*</span> All fields are required</p>
       </div>
       <div class="qr-card shadow">
+        <div class="ticket-decor" style="background-image: url('assets/images/ticket-bg.jpg');"></div>
         <h2>QR Code</h2>
         <p id="registration-status">Submit the form to receive your QR code.</p>
         <div id="qrCodeContainer" class="qr-preview"></div>
       </div>
     </section>
+
+    <div class="modal" id="paymentModal" aria-hidden="true">
+      <div class="modal-dialog">
+        <button class="modal-close" id="paymentModalClose" aria-label="Close payment modal">&times;</button>
+        <div class="modal-header">
+          <div class="payment-brand">
+            <span class="payment-logo">Easypaisa</span>
+            <p>Demo payment gateway</p>
+          </div>
+        </div>
+        <div class="modal-body">
+          <p>Enter your mobile number to simulate payment for the selected registration.</p>
+          <div class="modal-row">
+            <label for="paymentMobile">Easypaisa Mobile Number</label>
+            <input type="tel" id="paymentMobile" placeholder="03XXXXXXXXX" />
+            <div class="error-message" id="paymentMobileError"></div>
+          </div>
+          <div class="modal-row">
+            <span>Amount</span>
+            <strong id="paymentModalAmount">PKR 0</strong>
+          </div>
+          <button class="btn btn-primary" id="paymentConfirmBtn">Confirm Payment</button>
+          <div class="payment-note">Demo payments do not charge real accounts.</div>
+        </div>
+      </div>
+    </div>
+
   </main>
 
   <footer class="site-footer">
@@ -93,96 +122,6 @@
   </footer>
 
   <script src="js/main.js"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const form = document.getElementById('registration-form');
-      const fullNameInput = document.getElementById('fullName');
-      const emailInput = document.getElementById('email');
-      const phoneInput = document.getElementById('phone');
-      const eventInput = document.getElementById('eventSelect');
-      const submitBtn = document.getElementById('submitBtn');
-
-      function updateErrors() {
-        const nameError = document.getElementById('fullNameError');
-        const emailError = document.getElementById('emailError');
-        const phoneError = document.getElementById('phoneError');
-        const eventError = document.getElementById('eventError');
-
-        // Clear previous errors
-        nameError.textContent = '';
-        emailError.textContent = '';
-        phoneError.textContent = '';
-        eventError.textContent = '';
-
-        let allValid = true;
-
-        // Validate Full Name
-        if (fullNameInput.value.trim() === '') {
-          nameError.textContent = 'Full Name is required';
-          allValid = false;
-        } else if (!validateFullName(fullNameInput.value)) {
-          nameError.textContent = 'Full Name must be 3+ characters, letters and spaces only';
-          allValid = false;
-        } else {
-          fullNameInput.classList.add('input-valid');
-          fullNameInput.classList.remove('input-error');
-        }
-
-        // Validate Email
-        if (emailInput.value.trim() === '') {
-          emailError.textContent = 'Email is required';
-          allValid = false;
-        } else if (!validateEmail(emailInput.value)) {
-          emailError.textContent = 'Email must contain @ and a domain';
-          allValid = false;
-        } else {
-          emailInput.classList.add('input-valid');
-          emailInput.classList.remove('input-error');
-        }
-
-        // Validate Phone
-        if (phoneInput.value.trim() === '') {
-          phoneError.textContent = 'Phone Number is required';
-          allValid = false;
-        } else if (!validatePakistanPhone(phoneInput.value)) {
-          phoneError.textContent = 'Phone must be Pakistan format (03xx-xxxxxxx or 03xxxxxxxxx)';
-          allValid = false;
-        } else {
-          phoneInput.classList.add('input-valid');
-          phoneInput.classList.remove('input-error');
-        }
-
-        // Validate Event
-        if (!validateEventSelect(eventInput.value)) {
-          eventError.textContent = 'Please select an event';
-          allValid = false;
-        } else {
-          eventInput.classList.add('input-valid');
-          eventInput.classList.remove('input-error');
-        }
-
-        // Enable/disable submit button
-        submitBtn.disabled = !allValid;
-        if (allValid) {
-          submitBtn.style.opacity = '1';
-          submitBtn.style.cursor = 'pointer';
-        } else {
-          submitBtn.style.opacity = '0.5';
-          submitBtn.style.cursor = 'not-allowed';
-        }
-      }
-
-      fullNameInput.addEventListener('input', updateErrors);
-      emailInput.addEventListener('input', updateErrors);
-      phoneInput.addEventListener('input', updateErrors);
-      eventInput.addEventListener('change', updateErrors);
-
-      // Initial state
-      submitBtn.disabled = true;
-      submitBtn.style.opacity = '0.5';
-      updateErrors();
-    });
-  </script>
   <script>/* Botpress embed placeholder */
     window.botpressWebchat = { botId: 'YOUR_BOTPRESS_BOT_ID', host: 'https://cdn.botpress.com' };
   </script>

@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-H4oJ61CwPq8bFhfGf7eH3eIuFPeQh+8RId0nJ5zWJpq+F+bD+5pcKXk067YmPbt7OR5jv2LeAqz3YBUGMQ+I5Q==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <link rel="stylesheet" href="css/style.css" />
+
 </head>
 <body>
   <header class="site-header">
@@ -27,22 +28,37 @@
   </header>
 
   <main>
-    <section class="hero-section">
+    <section class="hero-section hero-background" style="background-image: url('assets/images/hero-banner.jpg');">
       <div class="container hero-content">
         <div class="hero-copy">
-          <span class="eyebrow">Future-Ready Event Management</span>
-          <h1>Streamline Events</h1>
-          <p>Manage events, registrations, and attendance with a polished platform built for modern communities. Experience streamlined workflows, QR-enabled registration, and automation-ready integration.</p>
+          <span class="eyebrow">Trusted Event Booking</span>
+          <h1>Host, Register, and Track Events Easily</h1>
+          <p>Streamline your event workflow with QR ticketing, Easypaisa payment simulation, and complete attendee management across all pages.</p>
           <div class="hero-actions">
             <a class="btn btn-primary" href="register.html">Register Now</a>
-            <a class="btn btn-secondary" href="events.html">View Events</a>
+            <a class="btn btn-secondary" href="events.html">See Events</a>
+          </div>
+          <div class="hero-stats">
+            <div class="hero-stat">
+              <strong>3</strong>
+              <span>Featured Events</span>
+            </div>
+            <div class="hero-stat">
+              <strong>1200+</strong>
+              <span>Attendees Registered</span>
+            </div>
+            <div class="hero-stat">
+              <strong>98%</strong>
+              <span>Payment Success Rate</span>
+            </div>
           </div>
         </div>
+
         <div class="hero-preview card shadow">
-          <h2>Quick Chatbot Preview</h2>
-          <p>Ask our virtual assistant about events, tickets, and support.</p>
+          <h2>Live Support Preview</h2>
+          <p>Chat with our virtual assistant for event guidance, registration help, and booking support.</p>
           <div class="chatbot-preview">
-            <p><strong>Bot:</strong> "Welcome! How can I help you with Streamline Events today?"</p>
+            <p><strong>Bot:</strong> "Hello! Want to register for a premium conference or networking event today?"</p>
           </div>
         </div>
       </div>
@@ -64,6 +80,46 @@
           <i class="fa-solid fa-qrcode feature-icon"></i>
           <h3>QR Code Ready</h3>
           <p>Generate QR codes for attendees and scan them in the admin dashboard to mark attendance.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="container section-heading">
+      <h2>Featured Events</h2>
+      <p>Explore the top trending experiences available through Streamline Events.</p>
+      <div class="event-grid">
+        <article class="event-card card">
+          <img src="assets/images/tech-conference.jpg" alt="Tech Conference 2026" />
+          <div class="event-card-content">
+            <span class="event-label">Conference</span>
+            <h3>Tech Conference 2026</h3>
+            <p class="event-meta"><i class="fa-solid fa-calendar-days"></i> Dec 10, 2026 • <i class="fa-solid fa-clock"></i> 9:00 AM - 5:00 PM</p>
+            <p class="event-meta"><i class="fa-solid fa-location-dot"></i> Expo Center</p>
+            <p class="event-fee">Fee: PKR 1,500</p>
+            <a class="btn btn-primary" href="register.html">Register</a>
+          </div>
+        </article>
+        <article class="event-card card">
+          <img src="assets/images/ai-workshop.jpg" alt="AI Workshop" />
+          <div class="event-card-content">
+            <span class="event-label">Workshop</span>
+            <h3>AI Workshop</h3>
+            <p class="event-meta"><i class="fa-solid fa-calendar-days"></i> Dec 15, 2026 • <i class="fa-solid fa-clock"></i> 10:00 AM - 4:00 PM</p>
+            <p class="event-meta"><i class="fa-solid fa-location-dot"></i> Tech Hub</p>
+            <p class="event-fee">Fee: PKR 3,000</p>
+            <a class="btn btn-primary" href="register.html">Register</a>
+          </div>
+        </article>
+        <article class="event-card card">
+          <img src="assets/images/networking-night.jpg" alt="Networking Night" />
+          <div class="event-card-content">
+            <span class="event-label">Networking</span>
+            <h3>Networking Night</h3>
+            <p class="event-meta"><i class="fa-solid fa-calendar-days"></i> Dec 20, 2026 • <i class="fa-solid fa-clock"></i> 7:00 PM - 11:00 PM</p>
+            <p class="event-meta"><i class="fa-solid fa-location-dot"></i> Royal Palm</p>
+            <p class="event-fee">Fee: PKR 5,000</p>
+            <a class="btn btn-primary" href="register.html">Register</a>
+          </div>
         </article>
       </div>
     </section>
@@ -118,5 +174,6 @@
     window.botpressWebchat = { botId: 'YOUR_BOTPRESS_BOT_ID', host: 'https://cdn.botpress.com' };
   </script>
   <script src="https://cdn.botpress.com/webchat/v0/inject.js"></script>
+
 </body>
 </html>
