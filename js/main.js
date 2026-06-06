@@ -1,10 +1,10 @@
-
 // Make.com Webhook Configuration
 const WEBHOOK_URL = 'https://hook.eu1.make.com/r6rcpxdpzrtk8sgr6b7o5xoe6wjc1qyb';
 
+// FIXED: QR Code using Google Charts API (reliable, no malformed error)
 function generateQrCodeUrl(regId) {
   const safeData = encodeURIComponent(regId);
-  return `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${safeData}`;
+  return `https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl=${safeData}`;
 }
 
 const defaultEvents = [
@@ -254,6 +254,7 @@ function bindRegisterPage() {
 
   function renderEventOptions() {
     const events = getEvents();
+    eventSelect.innerHTML = '<option value="">-- Choose an event --</option>';
     events.forEach((event) => {
       const option = document.createElement('option');
       option.value = event.id;
@@ -389,7 +390,7 @@ function bindRegisterPage() {
     // Update UI with registration success
     registrationStatus.textContent = 'Registration successful! Check email for QR code (demo).';
     qrCodeContainer.innerHTML = `
-      <img src="${registration.qrCodeUrl}" alt="QR code for ${registration.regId}" />
+      <img src="${registration.qrCodeUrl}" alt="QR code for ${registration.regId}" style="max-width:150px; margin:0 auto; display:block;" />
       <p class="qr-note">Save or screenshot your QR code.</p>
     `;
 
