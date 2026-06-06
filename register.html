@@ -106,8 +106,12 @@
             if (!isValid) return;
             
             // Generate RegID and QR
-            const regId = 'REG-' + Date.now() + '-' + Math.floor(Math.random()*1000);
-            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${regId}`;
+           
+            // RegID generate karo
+const regId = 'REG-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+
+// QR code URL – sahi format mein
+const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(regId)}&size=150x150`;
             
             // Save to localStorage
             const registrations = JSON.parse(localStorage.getItem('registrations') || '[]');
