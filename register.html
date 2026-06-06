@@ -126,5 +126,18 @@
     window.botpressWebchat = { botId: 'YOUR_BOTPRESS_BOT_ID', host: 'https://cdn.botpress.com' };
   </script>
   <script src="https://cdn.botpress.com/webchat/v0/inject.js"></script>
+<!-- register.html mein JavaScript example -->
+<script>
+document.getElementById('registrationForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    // ... form data collect karein ...
+    const response = await fetch('https://hook.eu1.make.com/r6rcpxdpzrtk8sgr6b7o5xoe6wjc1qyb', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+    });
+    // ... response handle karein ...
+});
+</script>
 </body>
 </html>
