@@ -1,130 +1,147 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Streamline Events | Register</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-H4oJ61CwPq8bFhfGf7eH3eIuFPeQh+8RId0nJ5zWJpq+F+bD+5pcKXk067YmPbt7OR5jv2LeAqz3YBUGMQ+I5Q==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-  <link rel="stylesheet" href="css/style.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Streamline Events</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/main.js" defer></script>
 </head>
 <body>
-  <header class="site-header">
-    <div class="container nav-container">
-      <a class="brand" href="index.html">Streamline Events</a>
-      <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
-      <nav class="main-nav">
-        <a href="index.html">Home</a>
-        <a href="events.html">Events</a>
-        <a href="register.html">Register</a>
-        <a href="gallery.html">Gallery</a>
-        <a href="contact.html">Contact</a>
-        <a href="admin.html">Admin</a>
-      </nav>
-    </div>
-  </header>
-
-  <main>
-    <section class="page-hero registration-hero">
-      <div class="container">
-        <h1>Register for an Event</h1>
-        <p>Complete the form below to secure your spot with a QR-ready confirmation.</p>
-      </div>
-    </section>
-
-    <section class="container form-section">
-      <div class="form-card shadow">
-        <h2>Registration Form</h2>
-        <form id="registration-form" novalidate>
-          <label for="fullName">Full Name <span class="required">*</span></label>
-          <input type="text" id="fullName" name="fullName" placeholder="Enter your full name" required />
-          <div class="error-message" id="fullNameError"></div>
-
-          <label for="email">Email Address <span class="required">*</span></label>
-          <input type="email" id="email" name="email" placeholder="your@email.com" required />
-          <div class="error-message" id="emailError"></div>
-
-          <label for="phone">Phone Number (Pakistan format) <span class="required">*</span></label>
-          <input type="tel" id="phone" name="phone" placeholder="03xxxxxxxxx" required />
-          <div class="error-message" id="phoneError"></div>
-
-          <label for="eventSelect">Select Event <span class="required">*</span></label>
-          <select id="eventSelect" name="eventSelect" required>
-            <option value="">Choose an event</option>
-          </select>
-          <div class="error-message" id="eventError"></div>
-
-          <div class="fee-display">Registration Fee: <span id="eventFee">PKR 0</span></div>
-
-          <label class="checkbox-label"><input type="checkbox" id="agreement" required /> I confirm I will pay the registration fee <span class="required">*</span></label>
-          <div class="error-message" id="agreementError"></div>
-
-          <button type="submit" class="btn btn-primary" id="submitBtn" disabled>Submit Registration</button>
+    <nav><!-- your navbar --></nav>
+    
+    <div class="container">
+        <h2>Event Registration</h2>
+        <form id="registrationForm">
+            <div>
+                <input type="text" id="fullname" placeholder="Full Name" required>
+                <div class="error" id="nameError"></div>
+            </div>
+            <div>
+                <input type="email" id="email" placeholder="Email" required>
+                <div class="error" id="emailError"></div>
+            </div>
+            <div>
+                <input type="tel" id="phone" placeholder="Phone (03xxxxxxxxx)" required>
+                <div class="error" id="phoneError"></div>
+            </div>
+            <div>
+                <select id="event" required>
+                    <option value="">Select Event</option>
+                    <option value="Tech Conference 2026">Tech Conference 2026 - 1500 PKR</option>
+                    <option value="AI Workshop">AI Workshop - 1000 PKR</option>
+                    <option value="Networking Night">Networking Night - 500 PKR</option>
+                </select>
+                <div class="error" id="eventError"></div>
+            </div>
+            <div>
+                <input type="text" id="fee" readonly placeholder="Fee will appear here">
+            </div>
+            <div>
+                <label>
+                    <input type="checkbox" id="agree" required>
+                    I confirm I will pay the registration fee
+                </label>
+                <div class="error" id="agreeError"></div>
+            </div>
+            <button type="submit" id="submitBtn">Register Now</button>
         </form>
-        <p class="form-note"><span class="required">*</span> All fields are required</p>
-      </div>
-      <div class="qr-card shadow">
-        <div class="ticket-decor" style="background-image: url('assets/images/ticket-bg.jpg');"></div>
-        <h2>QR Code</h2>
-        <p id="registration-status">Submit the form to receive your QR code.</p>
-        <div id="qrCodeContainer" class="qr-preview"></div>
-      </div>
-    </section>
-
-    <div class="modal" id="paymentModal" aria-hidden="true">
-      <div class="modal-dialog">
-        <button class="modal-close" id="paymentModalClose" aria-label="Close payment modal">&times;</button>
-        <div class="modal-header">
-          <div class="payment-brand">
-            <span class="payment-logo">Easypaisa</span>
-            <p>Demo payment gateway</p>
-          </div>
-        </div>
-        <div class="modal-body">
-          <p>Enter your mobile number to simulate payment for the selected registration.</p>
-          <div class="modal-row">
-            <label for="paymentMobile">Easypaisa Mobile Number</label>
-            <input type="tel" id="paymentMobile" placeholder="03XXXXXXXXX" />
-            <div class="error-message" id="paymentMobileError"></div>
-          </div>
-          <div class="modal-row">
-            <span>Amount</span>
-            <strong id="paymentModalAmount">PKR 0</strong>
-          </div>
-          <button class="btn btn-primary" id="paymentConfirmBtn">Confirm Payment</button>
-          <div class="payment-note">Demo payments do not charge real accounts.</div>
-        </div>
-      </div>
     </div>
 
-  </main>
+    <script>
+        // Fee update on event selection
+        const eventSelect = document.getElementById('event');
+        const feeInput = document.getElementById('fee');
+        const feeMap = {
+            'Tech Conference 2026': '1500 PKR',
+            'AI Workshop': '1000 PKR',
+            'Networking Night': '500 PKR'
+        };
+        eventSelect.addEventListener('change', () => {
+            feeInput.value = feeMap[eventSelect.value] || '';
+        });
 
-  <footer class="site-footer">
-    <div class="container footer-grid">
-      <div>
-        <h3>Streamline Events</h3>
-        <p>Delivering elegant event experiences with automation, QR capabilities, and support built in.</p>
-      </div>
-      <div>
-        <h4>Contact</h4>
-        <p>Email: <a href="mailto:support@streamlineevents.com">support@streamlineevents.com</a></p>
-        <p>Location: Lahore, Pakistan</p>
-      </div>
-      <div>
-        <h4>Follow</h4>
-        <p><a href="#"><i class="fa-brands fa-facebook-f"></i> Facebook</a></p>
-        <p><a href="#"><i class="fa-brands fa-instagram"></i> Instagram</a></p>
-      </div>
-    </div>
-    <div class="footer-note">© 2026 Streamline Events. All rights reserved.</div>
-  </footer>
+        // Webhook URL
+        const WEBHOOK_URL = 'https://hook.eu1.make.com/r6rcpxdpzrtk8sgr6b7o5xoe6wjc1qyb';
 
-  <script src="js/main.js"></script>
-  <script>/* Botpress embed placeholder */
-    window.botpressWebchat = { botId: 'YOUR_BOTPRESS_BOT_ID', host: 'https://cdn.botpress.com' };
-  </script>
-  <script src="https://cdn.botpress.com/webchat/v0/inject.js"></script>
+        // Form submission
+        document.getElementById('registrationForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Clear previous errors
+            document.querySelectorAll('.error').forEach(el => el.innerText = '');
+            
+            // Get values
+            const name = document.getElementById('fullname').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const event = eventSelect.value;
+            const agree = document.getElementById('agree').checked;
+            const fee = feeInput.value;
+            
+            let isValid = true;
+            
+            // Validation
+            if (name.length < 3 || !/^[A-Za-z\s]+$/.test(name)) {
+                document.getElementById('nameError').innerText = 'Valid name (min 3 letters) required';
+                isValid = false;
+            }
+            if (!/^\S+@\S+\.\S+$/.test(email)) {
+                document.getElementById('emailError').innerText = 'Valid email required';
+                isValid = false;
+            }
+            if (!/^03[0-9]{9}$/.test(phone)) {
+                document.getElementById('phoneError').innerText = 'Phone must be 03xxxxxxxxx (11 digits)';
+                isValid = false;
+            }
+            if (!event) {
+                document.getElementById('eventError').innerText = 'Select an event';
+                isValid = false;
+            }
+            if (!agree) {
+                document.getElementById('agreeError').innerText = 'You must agree to pay fee';
+                isValid = false;
+            }
+            
+            if (!isValid) return;
+            
+            // Generate RegID and QR
+            const regId = 'REG-' + Date.now() + '-' + Math.floor(Math.random()*1000);
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${regId}`;
+            
+            // Save to localStorage
+            const registrations = JSON.parse(localStorage.getItem('registrations') || '[]');
+            registrations.push({
+                regId, name, email, phone, eventName: event, fee, qrCodeUrl: qrUrl,
+                paymentStatus: 'Pending', timestamp: new Date().toISOString()
+            });
+            localStorage.setItem('registrations', JSON.stringify(registrations));
+            
+            // Prepare webhook data
+            const payload = { name, email, phone, event, fee: fee.replace(' PKR','') };
+            
+            // Send to webhook
+            try {
+                const response = await fetch(WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const text = await response.text();
+                if (response.ok) {
+                    alert('Registration successful! Check email for QR code (demo).');
+                } else {
+                    alert('Registration saved locally but automation failed. Please contact support.');
+                }
+            } catch (error) {
+                console.error('Webhook error:', error);
+                alert('Registration saved locally but automation failed. Please try again later.');
+            }
+            
+            // Reset form
+            document.getElementById('registrationForm').reset();
+            feeInput.value = '';
+        });
+    </script>
 </body>
 </html>
