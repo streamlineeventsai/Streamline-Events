@@ -127,16 +127,32 @@
   </script>
   <script src="https://cdn.botpress.com/webchat/v0/inject.js"></script>
 <!-- register.html mein JavaScript example -->
+
 <script>
+  // register.html mein form submit par
 document.getElementById('registrationForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    // ... form data collect karein ...
+    e.preventDefault(); // page refresh rokne ke liye
+
+    const formData = {
+        name: document.getElementById('fullname').value,
+        email: document.getElementById('email').value,
+        phone: document.getElementById('phone').value,
+        event: document.getElementById('event').value,
+        fee: document.getElementById('fee').value  // hidden ya readonly field
+    };
+
+    // Data bhejna webhook par
     const response = await fetch('https://hook.eu1.make.com/r6rcpxdpzrtk8sgr6b7o5xoe6wjc1qyb', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
     });
-    // ... response handle karein ...
+
+    if (response.ok) {
+        alert('Registration successful! Check email for QR code.');
+    } else {
+        alert('Something went wrong. Please try again.');
+    }
 });
 </script>
 </body>
