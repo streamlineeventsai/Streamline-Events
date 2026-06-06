@@ -1,4 +1,5 @@
-const WEBHOOK_URL = 'https://hook.make.com/YOUR_WEBHOOK_ID'; // Replace with actual webhook URL
+// Make.com Webhook Configuration
+const WEBHOOK_URL = 'https://hook.eu1.make.com/r6rcpxdpzrtk8sgr6b7o5xoe6wjc1qyb';
 
 function generateQrCodeUrl(regId) {
   const safeData = encodeURIComponent(regId);
@@ -167,14 +168,27 @@ function createEventId() {
   return `EVT-${String(maxId + 1).padStart(3, '0')}`;
 }
 
-function sendToWebhook(data) {
-  fetch(WEBHOOK_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  }).catch((error) => {
-    console.warn('Webhook request failed:', error);
-  });
+async function sendToWebhook(data) {
+  try {
+    const response = await fetch(WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+
+    // Make.com webhook returns text response, not JSON
+    const responseText = await response.text();
+    
+    if (response.ok || responseText.includes('Accepted')) {
+      return { success: true, message: 'Webhook processed successfully' };
+    } else {
+      console.warn('Webhook response:', responseText);
+      return { success: false, message: 'Webhook processing failed' };
+    }
+  } catch (error) {
+    console.error('Webhook request error:', error);
+    return { success: false, message: error.message };
+  }
 }
 
 function formatFee(amount) {
@@ -351,27 +365,51 @@ function bindRegisterPage() {
       qrCodeUrl: generateQrCodeUrl(registrationId),
       timestamp: new Date().toISOString(),
     };
+
+    // Save to localStorage first (independent of webhook)
     saveRegistration(registration);
     updateAttendance(registration.regId, 'Absent');
-    sendToWebhook(registration);
 
-    registrationStatus.textContent = 'Registration successful! Check email for QR code';
+    // Prepare webhook payload
+    const webhookPayload = {
+      name: registration.name,
+      email: registration.email,
+      phone: registration.phone,
+      event: registration.eventName,
+      fee: registration.fee,
+    };
+
+    // Send to webhook with async handling
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Processing...';
+
+    const webhookResult = await sendToWebhook(webhookPayload);
+
+    // Update UI with registration success
+    registrationStatus.textContent = 'Registration successful! Check email for QR code (demo).';
     qrCodeContainer.innerHTML = `
       <img src="${registration.qrCodeUrl}" alt="QR code for ${registration.regId}" />
       <p class="qr-note">Save or screenshot your QR code.</p>
     `;
 
+    // Provide feedback based on webhook response
+    if (webhookResult.success) {
+      alert('Registration successful! Check email for QR code.');
+    } else {
+      alert('Registration saved locally but automation failed. Please contact support.');
+    }
+
+    // Reset form
     registrationForm.reset();
     eventFeeLabel.textContent = 'PKR 0';
     submitBtn.disabled = true;
+    submitBtn.textContent = 'Submit Registration';
     submitBtn.style.opacity = '0.5';
     submitBtn.style.cursor = 'not-allowed';
 
+    // Open payment modal if fee is applicable
     if (selectedEvent.fee > 0) {
-      alert('Registration successful! Check email for QR code');
       openPaymentModal(registration);
-    } else {
-      alert('Registration successful! Check email for QR code');
     }
   });
 
@@ -430,8 +468,14 @@ function bindContactPage() {
       timestamp: new Date().toISOString(),
     };
 
-    sendToWebhook(contactData);
-    alert('Thank you! Your message has been sent successfully.');
+    const webhookResult = await sendToWebhook(contactData);
+    
+    if (webhookResult.success) {
+      alert('Thank you! Your message has been sent successfully.');
+    } else {
+      alert('Message saved but could not be sent. Please try again later.');
+    }
+    
     contactForm.reset();
   });
 }
