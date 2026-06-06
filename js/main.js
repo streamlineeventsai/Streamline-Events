@@ -1,7 +1,7 @@
 // Make.com Webhook Configuration
 const WEBHOOK_URL = 'https://hook.eu1.make.com/r6rcpxdpzrtk8sgr6b7o5xoe6wjc1qyb';
 
-// FIXED: QR Code using Google Charts API (reliable, no malformed error)
+// ✅ Fixed QR code – Google Charts API (never gives malformed error)
 function generateQrCodeUrl(regId) {
   const safeData = encodeURIComponent(regId);
   return `https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl=${safeData}`;
@@ -177,9 +177,7 @@ async function sendToWebhook(data) {
       body: JSON.stringify(data),
     });
 
-    // Make.com webhook returns text response, not JSON
     const responseText = await response.text();
-    
     if (response.ok || responseText.includes('Accepted')) {
       return { success: true, message: 'Webhook processed successfully' };
     } else {
@@ -368,11 +366,9 @@ function bindRegisterPage() {
       timestamp: new Date().toISOString(),
     };
 
-    // Save to localStorage first (independent of webhook)
     saveRegistration(registration);
     updateAttendance(registration.regId, 'Absent');
 
-    // Prepare webhook payload
     const webhookPayload = {
       name: registration.name,
       email: registration.email,
@@ -381,27 +377,23 @@ function bindRegisterPage() {
       fee: registration.fee,
     };
 
-    // Send to webhook with async handling
     submitBtn.disabled = true;
     submitBtn.textContent = 'Processing...';
 
     const webhookResult = await sendToWebhook(webhookPayload);
 
-    // Update UI with registration success
     registrationStatus.textContent = 'Registration successful! Check email for QR code (demo).';
     qrCodeContainer.innerHTML = `
       <img src="${registration.qrCodeUrl}" alt="QR code for ${registration.regId}" style="max-width:150px; margin:0 auto; display:block;" />
       <p class="qr-note">Save or screenshot your QR code.</p>
     `;
 
-    // Provide feedback based on webhook response
     if (webhookResult.success) {
       alert('Registration successful! Check email for QR code.');
     } else {
       alert('Registration saved locally but automation failed. Please contact support.');
     }
 
-    // Reset form
     registrationForm.reset();
     eventFeeLabel.textContent = 'PKR 0';
     submitBtn.disabled = true;
@@ -409,7 +401,6 @@ function bindRegisterPage() {
     submitBtn.style.opacity = '0.5';
     submitBtn.style.cursor = 'not-allowed';
 
-    // Open payment modal if fee is applicable
     if (selectedEvent.fee > 0) {
       openPaymentModal(registration);
     }
@@ -471,13 +462,11 @@ function bindContactPage() {
     };
 
     const webhookResult = await sendToWebhook(contactData);
-    
     if (webhookResult.success) {
       alert('Thank you! Your message has been sent successfully.');
     } else {
       alert('Message saved but could not be sent. Please try again later.');
     }
-    
     contactForm.reset();
   });
 }
@@ -798,7 +787,6 @@ function bindAdminPage() {
       return;
     }
 
-    const attendance = getAttendance();
     const registrationExists = getRegistrations().some((reg) => reg.regId === regId);
     if (!registrationExists) {
       alert('Registration code not found.');
