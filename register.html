@@ -8,8 +8,18 @@
     <script src="js/main.js" defer></script>
 </head>
 <body>
-    <nav><!-- your navbar --></nav>
-    
+    <nav>
+        <!-- Simple navbar – aap apna navbar yahan paste kar sakte ho -->
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="events.html">Events</a></li>
+            <li><a href="register.html">Register</a></li>
+            <li><a href="gallery.html">Gallery</a></li>
+            <li><a href="contact.html">Contact</a></li>
+            <li><a href="admin.html">Admin</a></li>
+        </ul>
+    </nav>
+
     <div class="container">
         <h2>Event Registration</h2>
         <form id="registrationForm">
@@ -61,8 +71,8 @@
             feeInput.value = feeMap[eventSelect.value] || '';
         });
 
-        // Webhook URL
-        const WEBHOOK_URL = 'https://hook.eu1.make.com/r6rcpxdpzrtk8sgr6b7o5xoe6wjc1qyb';
+        // NOTE: WEBHOOK_URL is already defined in main.js as a global variable.
+        // We will use it directly (no const/let/var here).
 
         // Form submission
         document.getElementById('registrationForm').addEventListener('submit', async function(e) {
@@ -105,13 +115,9 @@
             
             if (!isValid) return;
             
-            // Generate RegID and QR
-           
-            // RegID generate karo
-const regId = 'REG-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
-
-// QR code URL – sahi format mein
-const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(regId)}&size=150x150`;
+            // Generate RegID and QR code using Google API
+            const regId = 'REG-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+            const qrUrl = `https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl=${encodeURIComponent(regId)}`;
             
             // Save to localStorage
             const registrations = JSON.parse(localStorage.getItem('registrations') || '[]');
@@ -124,7 +130,7 @@ const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURICompo
             // Prepare webhook data
             const payload = { name, email, phone, event, fee: fee.replace(' PKR','') };
             
-            // Send to webhook
+            // Send to webhook (WEBHOOK_URL comes from main.js)
             try {
                 const response = await fetch(WEBHOOK_URL, {
                     method: 'POST',
