@@ -1,3 +1,4 @@
+
 // Make.com Webhook Configuration
 const WEBHOOK_URL = 'https://hook.eu1.make.com/r6rcpxdpzrtk8sgr6b7o5xoe6wjc1qyb';
 
