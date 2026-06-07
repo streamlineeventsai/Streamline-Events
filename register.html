@@ -20,9 +20,18 @@
     .event-details p {
       margin: 0.5rem 0;
     }
-    .readonly-field {
-      background: #eef2f6;
-      cursor: not-allowed;
+    .name-row {
+      display: flex;
+      gap: 1rem;
+    }
+    .name-row > div {
+      flex: 1;
+    }
+    @media (max-width: 640px) {
+      .name-row {
+        flex-direction: column;
+        gap: 0;
+      }
     }
   </style>
 </head>
@@ -46,24 +55,50 @@
     <section class="page-hero registration-hero">
       <div class="container">
         <h1>Event Registration</h1>
-        <p>Select an event, fill your details, and get your QR code instantly.</p>
+        <p>Fill your details, select an event, and get your QR code instantly.</p>
       </div>
     </section>
 
     <section class="container form-section">
       <div class="form-card shadow">
         <form id="registration-form" novalidate>
+          <!-- First & Last Name -->
+          <div class="name-row">
+            <div>
+              <label for="firstName">First Name *</label>
+              <input type="text" id="firstName" name="firstName" placeholder="Your first name" required />
+              <div class="error-message" id="firstNameError"></div>
+            </div>
+            <div>
+              <label for="lastName">Last Name *</label>
+              <input type="text" id="lastName" name="lastName" placeholder="Your last name" required />
+              <div class="error-message" id="lastNameError"></div>
+            </div>
+          </div>
+
+          <!-- Email -->
+          <label for="email">Email Address *</label>
+          <input type="email" id="email" name="email" placeholder="you@example.com" required />
+          <div class="error-message" id="emailError"></div>
+
+          <!-- Phone -->
+          <label for="phone">Phone Number (03xxxxxxxxx) *</label>
+          <input type="tel" id="phone" name="phone" placeholder="03001234567" required />
+          <div class="error-message" id="phoneError"></div>
+
+          <!-- CNIC (with dashes) -->
+          <label for="cnic">CNIC (with dashes) *</label>
+          <input type="text" id="cnic" name="cnic" placeholder="12345-1234567-1" required />
+          <div class="error-message" id="cnicError"></div>
+
           <!-- Event Dropdown -->
           <label for="eventSelect">Select Event *</label>
           <select id="eventSelect" name="eventSelect" required>
             <option value="">-- Choose an event --</option>
-            <option value="Tech Conference 2026">Tech Conference 2026</option>
-            <option value="AI Workshop">AI Workshop</option>
-            <option value="Networking Night">Networking Night</option>
           </select>
           <div class="error-message" id="eventError"></div>
 
-          <!-- Dynamic Event Details (Read-only) -->
+          <!-- Dynamic Event Details -->
           <div id="eventDetails" class="event-details" style="display: none;">
             <p><strong>📅 Date:</strong> <span id="eventDate">-</span></p>
             <p><strong>⏰ Time:</strong> <span id="eventTime">-</span></p>
@@ -71,26 +106,7 @@
             <p><strong>📍 Venue:</strong> <span id="eventLocation">-</span></p>
           </div>
 
-          <!-- User Details -->
-          <label for="fullName">Full Name *</label>
-          <input type="text" id="fullName" name="fullName" placeholder="Your full name" required />
-          <div class="error-message" id="fullNameError"></div>
-
-          <label for="email">Email *</label>
-          <input type="email" id="email" name="email" placeholder="you@example.com" required />
-          <div class="error-message" id="emailError"></div>
-
-          <label for="phone">Phone (03xxxxxxxxx) *</label>
-          <input type="tel" id="phone" name="phone" placeholder="03001234567" required />
-          <div class="error-message" id="phoneError"></div>
-
-          <label class="checkbox-label">
-            <input type="checkbox" id="agreement" name="agreement" />
-            I confirm I will pay the registration fee
-          </label>
-          <div class="error-message" id="agreementError"></div>
-
-          <button type="submit" id="submitBtn" class="btn btn-primary" disabled>Submit Registration</button>
+          <button type="submit" id="submitBtn" class="btn btn-primary" disabled>Register Now</button>
           <div id="registration-status" class="form-note"></div>
         </form>
       </div>
@@ -126,216 +142,220 @@
     <div class="footer-note">© 2026 Streamline Events. All rights reserved.</div>
   </footer>
 
-  <!-- Payment Modal (Easypaisa simulation) -->
-  <div id="paymentModal" class="modal" aria-hidden="true">
-    <div class="modal-dialog">
-      <button class="modal-close" id="paymentModalClose">&times;</button>
-      <div class="modal-header">
-        <div class="payment-brand">
-          <div class="payment-logo"><i class="fa-brands fa-easypaisa"></i> Easypaisa</div>
-          <small>Test Mode (Demo)</small>
-        </div>
-      </div>
-      <div class="modal-body">
-        <div class="modal-row">
-          <label>Mobile Number</label>
-          <input type="tel" id="paymentMobile" placeholder="03XXXXXXXXX" />
-          <div class="error-message" id="paymentMobileError"></div>
-        </div>
-        <div class="modal-row">
-          <strong>Amount: <span id="paymentModalAmount">PKR 0</span></strong>
-        </div>
-        <div class="payment-note">*This is a simulated payment. No actual transaction occurs.</div>
-        <button class="btn btn-primary" id="paymentConfirmBtn">Confirm Payment</button>
-      </div>
-    </div>
-  </div>
-
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="js/main.js"></script>
   <script>
-    // Event details mapping
-    const eventDetailsMap = {
-      "Tech Conference 2026": {
-        date: "Dec 10, 2026",
-        time: "9:00 AM - 5:00 PM",
-        fee: "1500",
-        location: "Expo Center"
-      },
-      "AI Workshop": {
-        date: "Dec 15, 2026",
-        time: "10:00 AM - 4:00 PM",
-        fee: "3000",
-        location: "Tech Hub"
-      },
-      "Networking Night": {
-        date: "Dec 20, 2026",
-        time: "7:00 PM - 11:00 PM",
-        fee: "5000",
-        location: "Royal Palm"
-      }
-    };
-
-    // DOM elements
-    const eventSelect = document.getElementById('eventSelect');
-    const eventDetailsDiv = document.getElementById('eventDetails');
-    const eventDateSpan = document.getElementById('eventDate');
-    const eventTimeSpan = document.getElementById('eventTime');
-    const eventFeeSpan = document.getElementById('eventFee');
-    const eventLocationSpan = document.getElementById('eventLocation');
-    const fullNameInput = document.getElementById('fullName');
-    const emailInput = document.getElementById('email');
-    const phoneInput = document.getElementById('phone');
-    const agreementCheck = document.getElementById('agreement');
-    const submitBtn = document.getElementById('submitBtn');
-    const registrationStatus = document.getElementById('registration-status');
-    const qrCodeContainer = document.getElementById('qrCodeContainer');
-    const paymentModal = document.getElementById('paymentModal');
-    const paymentModalClose = document.getElementById('paymentModalClose');
-    const paymentMobileInput = document.getElementById('paymentMobile');
-    const paymentModalAmount = document.getElementById('paymentModalAmount');
-    const paymentConfirmBtn = document.getElementById('paymentConfirmBtn');
-    const paymentMobileError = document.getElementById('paymentMobileError');
-
-    let currentRegistration = null;
-
-    // Show event details on selection
-    eventSelect.addEventListener('change', function() {
-      const selectedEvent = eventSelect.value;
-      if (selectedEvent && eventDetailsMap[selectedEvent]) {
-        const details = eventDetailsMap[selectedEvent];
-        eventDateSpan.textContent = details.date;
-        eventTimeSpan.textContent = details.time;
-        eventFeeSpan.textContent = details.fee + ' PKR';
-        eventLocationSpan.textContent = details.location;
-        eventDetailsDiv.style.display = 'block';
-      } else {
-        eventDetailsDiv.style.display = 'none';
-      }
-      validateForm();
-    });
-
-    // Validation function
-    function validateForm() {
-      const nameValid = validateName(fullNameInput.value);
-      const emailValid = validateEmail(emailInput.value);
-      const phoneValid = validatePakistanPhone(phoneInput.value);
-      const eventValid = eventSelect.value !== '';
-      const agreementValid = agreementCheck.checked;
-
-      document.getElementById('fullNameError').textContent = nameValid ? '' : 'Full Name must be 3+ letters and spaces only.';
-      document.getElementById('emailError').textContent = emailValid ? '' : 'Enter a valid email address.';
-      document.getElementById('phoneError').textContent = phoneValid ? '' : 'Use Pakistan phone format 03xxxxxxxxx.';
-      document.getElementById('eventError').textContent = eventValid ? '' : 'Please select an event.';
-      document.getElementById('agreementError').textContent = agreementValid ? '' : 'You must confirm the registration fee.';
-
-      const isFormValid = nameValid && emailValid && phoneValid && eventValid && agreementValid;
-      submitBtn.disabled = !isFormValid;
-      submitBtn.style.opacity = isFormValid ? '1' : '0.5';
-      return isFormValid;
+    // Get event details from main.js events array
+    function getEventsList() {
+      // Access global events from main.js
+      return window.getEvents ? window.getEvents() : [];
     }
 
-    fullNameInput.addEventListener('input', validateForm);
-    emailInput.addEventListener('input', validateForm);
-    phoneInput.addEventListener('input', validateForm);
-    agreementCheck.addEventListener('change', validateForm);
+    // Event details mapping (fallback in case events not loaded)
+    const eventDetailsMap = {};
 
-    // Open payment modal
-    function openPaymentModal(registration) {
-      currentRegistration = registration;
-      paymentModalAmount.textContent = `PKR ${registration.fee}`;
-      paymentMobileInput.value = '';
-      paymentMobileError.textContent = '';
-      paymentModal.classList.add('active');
+    // Load events from localStorage/main.js
+    function loadEventsIntoDropdown() {
+      const events = getEventsList();
+      const select = document.getElementById('eventSelect');
+      if (!select) return;
+      select.innerHTML = '<option value="">-- Choose an event --</option>';
+      events.forEach(event => {
+        const option = document.createElement('option');
+        option.value = event.id;
+        option.textContent = `${event.name} • ${event.date} • ${event.time} • ${formatFee(event.fee)}`;
+        select.appendChild(option);
+        // Store details for quick access
+        eventDetailsMap[event.id] = {
+          name: event.name,
+          date: event.date,
+          time: event.time,
+          fee: event.fee,
+          location: event.location
+        };
+      });
     }
 
-    function closePaymentModal() {
-      paymentModal.classList.remove('active');
-    }
+    // Show event details when event selected
+    function setupEventDetails() {
+      const select = document.getElementById('eventSelect');
+      const detailsDiv = document.getElementById('eventDetails');
+      const dateSpan = document.getElementById('eventDate');
+      const timeSpan = document.getElementById('eventTime');
+      const feeSpan = document.getElementById('eventFee');
+      const locationSpan = document.getElementById('eventLocation');
 
-    function handlePaymentConfirmation() {
-      const mobile = paymentMobileInput.value.trim();
-      if (!validatePakistanPhone(mobile)) {
-        paymentMobileError.textContent = 'Enter a valid Pakistan mobile number.';
-        return;
-      }
-      paymentConfirmBtn.disabled = true;
-      paymentConfirmBtn.textContent = 'Processing...';
-      setTimeout(() => {
-        if (currentRegistration) {
-          updateRegistrationPayment(currentRegistration.regId);
-          updateAttendance(currentRegistration.regId, 'Absent');
+      select.addEventListener('change', () => {
+        const eventId = select.value;
+        if (eventId && eventDetailsMap[eventId]) {
+          const ev = eventDetailsMap[eventId];
+          dateSpan.textContent = ev.date;
+          timeSpan.textContent = ev.time;
+          feeSpan.textContent = formatFee(ev.fee);
+          locationSpan.textContent = ev.location;
+          detailsDiv.style.display = 'block';
+        } else {
+          detailsDiv.style.display = 'none';
         }
-        paymentConfirmBtn.disabled = false;
-        paymentConfirmBtn.textContent = 'Confirm Payment';
-        closePaymentModal();
-        alert('Payment successful (Demo)');
-      }, 2000);
+        validateForm();
+      });
     }
 
-    paymentModalClose.addEventListener('click', closePaymentModal);
-    paymentConfirmBtn.addEventListener('click', handlePaymentConfirmation);
+    // Validation functions (using existing from main.js)
+    function validateNameField(value) {
+      return /^[A-Za-z ]{2,}$/.test(value.trim());
+    }
+
+    function validateEmailField(value) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+    }
+
+    function validatePhoneField(value) {
+      const cleaned = value.replace(/[-\s]/g, '');
+      return /^03\d{9}$/.test(cleaned);
+    }
+
+    function validateCNIC(value) {
+      return /^\d{5}-\d{7}-\d{1}$/.test(value.trim());
+    }
+
+    function validateForm() {
+      const firstName = document.getElementById('firstName').value.trim();
+      const lastName = document.getElementById('lastName').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+      const cnic = document.getElementById('cnic').value.trim();
+      const eventId = document.getElementById('eventSelect').value;
+
+      const firstNameValid = firstName.length >= 2;
+      const lastNameValid = lastName.length >= 2;
+      const emailValid = validateEmailField(email);
+      const phoneValid = validatePhoneField(phone);
+      const cnicValid = validateCNIC(cnic);
+      const eventValid = eventId !== '';
+
+      document.getElementById('firstNameError').textContent = firstNameValid ? '' : 'First name required (min 2 letters).';
+      document.getElementById('lastNameError').textContent = lastNameValid ? '' : 'Last name required (min 2 letters).';
+      document.getElementById('emailError').textContent = emailValid ? '' : 'Valid email required.';
+      document.getElementById('phoneError').textContent = phoneValid ? '' : 'Phone must be 03xxxxxxxxx.';
+      document.getElementById('cnicError').textContent = cnicValid ? '' : 'CNIC format: 12345-1234567-1';
+      document.getElementById('eventError').textContent = eventValid ? '' : 'Select an event.';
+
+      const isValid = firstNameValid && lastNameValid && emailValid && phoneValid && cnicValid && eventValid;
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = !isValid;
+      submitBtn.style.opacity = isValid ? '1' : '0.5';
+      return isValid;
+    }
+
+    // Override createRegistrationId to include CNIC and fullName
+    // We'll use existing createRegistrationId from main.js but need to pass fullName
+    // We'll modify save logic manually
 
     // Form submission
     document.getElementById('registration-form').addEventListener('submit', async function(e) {
       e.preventDefault();
       if (!validateForm()) return;
 
-      const selectedEvent = eventSelect.value;
-      const eventDetails = eventDetailsMap[selectedEvent];
-      const fee = parseInt(eventDetails.fee);
+      const firstName = document.getElementById('firstName').value.trim();
+      const lastName = document.getElementById('lastName').value.trim();
+      const fullName = firstName + ' ' + lastName;
+      const email = document.getElementById('email').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+      const cnic = document.getElementById('cnic').value.trim();
+      const eventId = document.getElementById('eventSelect').value;
+      const eventDetail = eventDetailsMap[eventId];
+      const fee = eventDetail.fee;
 
-      const registrationId = createRegistrationId();
+      // Generate registration ID
+      const registrations = JSON.parse(localStorage.getItem('registrations') || '[]');
+      let maxNum = 0;
+      registrations.forEach(reg => {
+        const num = parseInt(reg.regId.replace('REG-', ''));
+        if (!isNaN(num) && num > maxNum) maxNum = num;
+      });
+      const regId = `REG-${String(maxNum + 1).padStart(3, '0')}`;
+      const qrUrl = `https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl=${encodeURIComponent(regId)}`;
+
       const registration = {
-        regId: registrationId,
-        name: fullNameInput.value.trim(),
-        email: emailInput.value.trim(),
-        phone: phoneInput.value.trim(),
-        eventId: 'CUSTOM-' + selectedEvent.replace(/ /g, '-'),
-        eventName: selectedEvent,
+        regId: regId,
+        name: fullName,
+        email: email,
+        phone: phone,
+        cnic: cnic,
+        eventId: eventId,
+        eventName: eventDetail.name,
         fee: fee,
-        paymentStatus: fee > 0 ? 'Pending' : 'Paid',
-        qrCodeUrl: generateQrCodeUrl(registrationId),
+        paymentStatus: 'Paid', // No payment modal, so directly Paid
+        qrCodeUrl: qrUrl,
         timestamp: new Date().toISOString()
       };
 
       // Save to localStorage
-      saveRegistration(registration);
-      updateAttendance(registration.regId, 'Absent');
+      registrations.push(registration);
+      localStorage.setItem('registrations', JSON.stringify(registrations));
 
-      // Send to webhook
+      // Update attendance (default absent)
+      let attendance = JSON.parse(localStorage.getItem('attendance') || '[]');
+      attendance.push({ regId: regId, status: 'Absent' });
+      localStorage.setItem('attendance', JSON.stringify(attendance));
+
+      // Send to Make.com webhook
+      // ** REPLACE THIS URL WITH YOUR ACTUAL MAKE.COM WEBHOOK URL **
+      const WEBHOOK_URL = 'https://hook.make.com/YOUR_WEBHOOK_ID'; // ⬅️ Change this!
       const webhookPayload = {
-        name: registration.name,
-        email: registration.email,
-        phone: registration.phone,
-        event: registration.eventName,
-        fee: registration.fee
+        name: fullName,
+        email: email,
+        phone: phone,
+        cnic: cnic,
+        event: eventDetail.name,
+        fee: fee,
+        regId: regId,
+        qrCodeUrl: qrUrl
       };
-      const webhookResult = await sendToWebhook(webhookPayload);
 
-      // Show QR code
-      qrCodeContainer.innerHTML = `
-        <img src="${registration.qrCodeUrl}" alt="QR code" style="max-width:150px; margin:0 auto; display:block;" />
+      try {
+        const response = await fetch(WEBHOOK_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(webhookPayload)
+        });
+        const text = await response.text();
+        if (response.ok || text.includes('Accepted')) {
+          alert('Registration successful! Check your email for QR code (automation will send it).');
+        } else {
+          alert('Registration saved locally but automation failed. Please contact support.');
+        }
+      } catch (error) {
+        console.error('Webhook error:', error);
+        alert('Registration saved locally but automation failed. Please try again later.');
+      }
+
+      // Show QR code on page
+      const qrContainer = document.getElementById('qrCodeContainer');
+      qrContainer.innerHTML = `
+        <img src="${qrUrl}" alt="QR code" style="max-width:150px; margin:0 auto; display:block;" />
         <p class="qr-note">Save or screenshot your QR code.</p>
       `;
-      registrationStatus.textContent = 'Registration successful! Check email for QR code (demo).';
-
-      if (webhookResult.success) {
-        alert('Registration successful! Check your email for QR code.');
-      } else {
-        alert('Registration saved locally but automation failed. Please contact support.');
-      }
+      document.getElementById('registration-status').textContent = 'Registration successful!';
 
       // Reset form
       document.getElementById('registration-form').reset();
-      eventDetailsDiv.style.display = 'none';
-      submitBtn.disabled = true;
-      submitBtn.style.opacity = '0.5';
+      document.getElementById('eventDetails').style.display = 'none';
+      document.getElementById('submitBtn').disabled = true;
+    });
 
-      // Open payment modal if fee > 0
-      if (fee > 0) {
-        openPaymentModal(registration);
-      }
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      loadEventsIntoDropdown();
+      setupEventDetails();
+      // Add input listeners for validation
+      ['firstName', 'lastName', 'email', 'phone', 'cnic', 'eventSelect'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', validateForm);
+        if (el && id === 'eventSelect') el.addEventListener('change', validateForm);
+      });
+      validateForm();
     });
   </script>
   <script>
