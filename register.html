@@ -9,6 +9,22 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .event-details {
+      background: #f8f9fc;
+      border-radius: 16px;
+      padding: 1rem;
+      margin: 1rem 0;
+      border-left: 4px solid var(--gold);
+    }
+    .event-details p {
+      margin: 0.5rem 0;
+    }
+    .readonly-field {
+      background: #eef2f6;
+      cursor: not-allowed;
+    }
+  </style>
 </head>
 <body>
   <header class="site-header">
@@ -30,34 +46,43 @@
     <section class="page-hero registration-hero">
       <div class="container">
         <h1>Event Registration</h1>
-        <p>Fill the form, choose your event, and complete the payment simulation to get your QR code.</p>
+        <p>Select an event, fill your details, and get your QR code instantly.</p>
       </div>
     </section>
 
     <section class="container form-section">
       <div class="form-card shadow">
         <form id="registration-form" novalidate>
-          <label for="fullName">Full Name</label>
-          <input type="text" id="fullName" name="fullName" placeholder="Your full name" required />
-          <div class="error-message" id="fullNameError"></div>
-
-          <label for="email">Email</label>
-          <input type="email" id="email" name="email" placeholder="you@example.com" required />
-          <div class="error-message" id="emailError"></div>
-
-          <label for="phone">Phone (03xxxxxxxxx)</label>
-          <input type="tel" id="phone" name="phone" placeholder="03001234567" required />
-          <div class="error-message" id="phoneError"></div>
-
-          <label for="eventSelect">Select Event</label>
+          <!-- Event Dropdown -->
+          <label for="eventSelect">Select Event *</label>
           <select id="eventSelect" name="eventSelect" required>
             <option value="">-- Choose an event --</option>
+            <option value="Tech Conference 2026">Tech Conference 2026</option>
+            <option value="AI Workshop">AI Workshop</option>
+            <option value="Networking Night">Networking Night</option>
           </select>
           <div class="error-message" id="eventError"></div>
 
-          <div class="fee-display">
-            <strong>Event Fee: <span id="eventFee">PKR 0</span></strong>
+          <!-- Dynamic Event Details (Read-only) -->
+          <div id="eventDetails" class="event-details" style="display: none;">
+            <p><strong>📅 Date:</strong> <span id="eventDate">-</span></p>
+            <p><strong>⏰ Time:</strong> <span id="eventTime">-</span></p>
+            <p><strong>💰 Fee:</strong> <span id="eventFee">-</span></p>
+            <p><strong>📍 Venue:</strong> <span id="eventLocation">-</span></p>
           </div>
+
+          <!-- User Details -->
+          <label for="fullName">Full Name *</label>
+          <input type="text" id="fullName" name="fullName" placeholder="Your full name" required />
+          <div class="error-message" id="fullNameError"></div>
+
+          <label for="email">Email *</label>
+          <input type="email" id="email" name="email" placeholder="you@example.com" required />
+          <div class="error-message" id="emailError"></div>
+
+          <label for="phone">Phone (03xxxxxxxxx) *</label>
+          <input type="tel" id="phone" name="phone" placeholder="03001234567" required />
+          <div class="error-message" id="phoneError"></div>
 
           <label class="checkbox-label">
             <input type="checkbox" id="agreement" name="agreement" />
@@ -128,6 +153,191 @@
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="js/main.js"></script>
+  <script>
+    // Event details mapping
+    const eventDetailsMap = {
+      "Tech Conference 2026": {
+        date: "Dec 10, 2026",
+        time: "9:00 AM - 5:00 PM",
+        fee: "1500",
+        location: "Expo Center"
+      },
+      "AI Workshop": {
+        date: "Dec 15, 2026",
+        time: "10:00 AM - 4:00 PM",
+        fee: "3000",
+        location: "Tech Hub"
+      },
+      "Networking Night": {
+        date: "Dec 20, 2026",
+        time: "7:00 PM - 11:00 PM",
+        fee: "5000",
+        location: "Royal Palm"
+      }
+    };
+
+    // DOM elements
+    const eventSelect = document.getElementById('eventSelect');
+    const eventDetailsDiv = document.getElementById('eventDetails');
+    const eventDateSpan = document.getElementById('eventDate');
+    const eventTimeSpan = document.getElementById('eventTime');
+    const eventFeeSpan = document.getElementById('eventFee');
+    const eventLocationSpan = document.getElementById('eventLocation');
+    const fullNameInput = document.getElementById('fullName');
+    const emailInput = document.getElementById('email');
+    const phoneInput = document.getElementById('phone');
+    const agreementCheck = document.getElementById('agreement');
+    const submitBtn = document.getElementById('submitBtn');
+    const registrationStatus = document.getElementById('registration-status');
+    const qrCodeContainer = document.getElementById('qrCodeContainer');
+    const paymentModal = document.getElementById('paymentModal');
+    const paymentModalClose = document.getElementById('paymentModalClose');
+    const paymentMobileInput = document.getElementById('paymentMobile');
+    const paymentModalAmount = document.getElementById('paymentModalAmount');
+    const paymentConfirmBtn = document.getElementById('paymentConfirmBtn');
+    const paymentMobileError = document.getElementById('paymentMobileError');
+
+    let currentRegistration = null;
+
+    // Show event details on selection
+    eventSelect.addEventListener('change', function() {
+      const selectedEvent = eventSelect.value;
+      if (selectedEvent && eventDetailsMap[selectedEvent]) {
+        const details = eventDetailsMap[selectedEvent];
+        eventDateSpan.textContent = details.date;
+        eventTimeSpan.textContent = details.time;
+        eventFeeSpan.textContent = details.fee + ' PKR';
+        eventLocationSpan.textContent = details.location;
+        eventDetailsDiv.style.display = 'block';
+      } else {
+        eventDetailsDiv.style.display = 'none';
+      }
+      validateForm();
+    });
+
+    // Validation function
+    function validateForm() {
+      const nameValid = validateName(fullNameInput.value);
+      const emailValid = validateEmail(emailInput.value);
+      const phoneValid = validatePakistanPhone(phoneInput.value);
+      const eventValid = eventSelect.value !== '';
+      const agreementValid = agreementCheck.checked;
+
+      document.getElementById('fullNameError').textContent = nameValid ? '' : 'Full Name must be 3+ letters and spaces only.';
+      document.getElementById('emailError').textContent = emailValid ? '' : 'Enter a valid email address.';
+      document.getElementById('phoneError').textContent = phoneValid ? '' : 'Use Pakistan phone format 03xxxxxxxxx.';
+      document.getElementById('eventError').textContent = eventValid ? '' : 'Please select an event.';
+      document.getElementById('agreementError').textContent = agreementValid ? '' : 'You must confirm the registration fee.';
+
+      const isFormValid = nameValid && emailValid && phoneValid && eventValid && agreementValid;
+      submitBtn.disabled = !isFormValid;
+      submitBtn.style.opacity = isFormValid ? '1' : '0.5';
+      return isFormValid;
+    }
+
+    fullNameInput.addEventListener('input', validateForm);
+    emailInput.addEventListener('input', validateForm);
+    phoneInput.addEventListener('input', validateForm);
+    agreementCheck.addEventListener('change', validateForm);
+
+    // Open payment modal
+    function openPaymentModal(registration) {
+      currentRegistration = registration;
+      paymentModalAmount.textContent = `PKR ${registration.fee}`;
+      paymentMobileInput.value = '';
+      paymentMobileError.textContent = '';
+      paymentModal.classList.add('active');
+    }
+
+    function closePaymentModal() {
+      paymentModal.classList.remove('active');
+    }
+
+    function handlePaymentConfirmation() {
+      const mobile = paymentMobileInput.value.trim();
+      if (!validatePakistanPhone(mobile)) {
+        paymentMobileError.textContent = 'Enter a valid Pakistan mobile number.';
+        return;
+      }
+      paymentConfirmBtn.disabled = true;
+      paymentConfirmBtn.textContent = 'Processing...';
+      setTimeout(() => {
+        if (currentRegistration) {
+          updateRegistrationPayment(currentRegistration.regId);
+          updateAttendance(currentRegistration.regId, 'Absent');
+        }
+        paymentConfirmBtn.disabled = false;
+        paymentConfirmBtn.textContent = 'Confirm Payment';
+        closePaymentModal();
+        alert('Payment successful (Demo)');
+      }, 2000);
+    }
+
+    paymentModalClose.addEventListener('click', closePaymentModal);
+    paymentConfirmBtn.addEventListener('click', handlePaymentConfirmation);
+
+    // Form submission
+    document.getElementById('registration-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      if (!validateForm()) return;
+
+      const selectedEvent = eventSelect.value;
+      const eventDetails = eventDetailsMap[selectedEvent];
+      const fee = parseInt(eventDetails.fee);
+
+      const registrationId = createRegistrationId();
+      const registration = {
+        regId: registrationId,
+        name: fullNameInput.value.trim(),
+        email: emailInput.value.trim(),
+        phone: phoneInput.value.trim(),
+        eventId: 'CUSTOM-' + selectedEvent.replace(/ /g, '-'),
+        eventName: selectedEvent,
+        fee: fee,
+        paymentStatus: fee > 0 ? 'Pending' : 'Paid',
+        qrCodeUrl: generateQrCodeUrl(registrationId),
+        timestamp: new Date().toISOString()
+      };
+
+      // Save to localStorage
+      saveRegistration(registration);
+      updateAttendance(registration.regId, 'Absent');
+
+      // Send to webhook
+      const webhookPayload = {
+        name: registration.name,
+        email: registration.email,
+        phone: registration.phone,
+        event: registration.eventName,
+        fee: registration.fee
+      };
+      const webhookResult = await sendToWebhook(webhookPayload);
+
+      // Show QR code
+      qrCodeContainer.innerHTML = `
+        <img src="${registration.qrCodeUrl}" alt="QR code" style="max-width:150px; margin:0 auto; display:block;" />
+        <p class="qr-note">Save or screenshot your QR code.</p>
+      `;
+      registrationStatus.textContent = 'Registration successful! Check email for QR code (demo).';
+
+      if (webhookResult.success) {
+        alert('Registration successful! Check your email for QR code.');
+      } else {
+        alert('Registration saved locally but automation failed. Please contact support.');
+      }
+
+      // Reset form
+      document.getElementById('registration-form').reset();
+      eventDetailsDiv.style.display = 'none';
+      submitBtn.disabled = true;
+      submitBtn.style.opacity = '0.5';
+
+      // Open payment modal if fee > 0
+      if (fee > 0) {
+        openPaymentModal(registration);
+      }
+    });
+  </script>
   <script>
     window.botpressWebchat = { botId: 'YOUR_BOTPRESS_BOT_ID', host: 'https://cdn.botpress.com' };
   </script>
