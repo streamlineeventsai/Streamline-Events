@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-H4oJ61CwPq8bFhfGf7eH3eIuFPeQh+8RId0nJ5zWJpq+F+bD+5pcKXk067YmPbt7OR5jv2LeAqz3YBUGMQ+I5Q==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body class="admin-page">
@@ -91,20 +91,10 @@
             <button type="button" class="btn btn-secondary" id="resetEventBtn">Reset</button>
           </div>
         </form>
-
         <div class="table-wrap">
           <table>
             <thead>
-              <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Date</th>
-                <th>Time</th>
-                <th>Location</th>
-                <th>Capacity</th>
-                <th>Fee</th>
-                <th>Actions</th>
-              </tr>
+              <tr><th>ID</th><th>Name</th><th>Date</th><th>Time</th><th>Location</th><th>Capacity</th><th>Fee</th><th>Actions</th></tr>
             </thead>
             <tbody id="eventTableBody"></tbody>
           </table>
@@ -115,27 +105,14 @@
         <div class="admin-card-header">
           <h2>Registrations</h2>
           <div class="admin-filter">
-            <select id="registrationFilter">
-              <option value="">All events</option>
-            </select>
+            <select id="registrationFilter"><option value="">All events</option></select>
             <button type="button" id="exportCsvBtn" class="btn btn-secondary">Export CSV</button>
           </div>
         </div>
-
         <div class="table-wrap">
           <table>
             <thead>
-              <tr>
-                <th>Reg ID</th>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Phone</th>
-                <th>Event</th>
-                <th>Fee</th>
-                <th>Payment</th>
-                <th>QR Code</th>
-                <th>Actions</th>
-              </tr>
+              <tr><th>Reg ID</th><th>Name</th><th>Email</th><th>Phone</th><th>CNIC</th><th>Event</th><th>Fee</th><th>Payment</th><th>QR Code</th><th>Actions</th></tr>
             </thead>
             <tbody id="registrationTableBody"></tbody>
           </table>
@@ -154,20 +131,11 @@
         <div id="attendanceCounts" class="attendance-counts"></div>
         <div class="table-wrap">
           <table>
-            <thead>
-              <tr>
-                <th>Reg ID</th>
-                <th>Name</th>
-                <th>Event</th>
-                <th>Status</th>
-                <th>Action</th>
-              </tr>
-            </thead>
+            <thead><tr><th>Reg ID</th><th>Name</th><th>Event</th><th>Status</th><th>Action</th></tr></thead>
             <tbody id="attendanceTableBody"></tbody>
           </table>
         </div>
       </div>
-
       <div class="admin-card shadow">
         <h2>Registration Chart</h2>
         <canvas id="registrationChart"></canvas>
@@ -177,20 +145,9 @@
 
   <footer class="site-footer">
     <div class="container footer-grid">
-      <div>
-        <h3>Streamline Events</h3>
-        <p>Delivering elegant event experiences with automation, QR capabilities, and support built in.</p>
-      </div>
-      <div>
-        <h4>Contact</h4>
-        <p>Email: <a href="mailto:support@streamlineevents.com">support@streamlineevents.com</a></p>
-        <p>Location: Lahore, Pakistan</p>
-      </div>
-      <div>
-        <h4>Follow</h4>
-        <p><a href="#"><i class="fa-brands fa-facebook-f"></i> Facebook</a></p>
-        <p><a href="#"><i class="fa-brands fa-instagram"></i> Instagram</a></p>
-      </div>
+      <div><h3>Streamline Events</h3><p>Delivering elegant event experiences with automation, QR capabilities, and support built in.</p></div>
+      <div><h4>Contact</h4><p>Email: <a href="mailto:support@streamlineevents.com">support@streamlineevents.com</a></p><p>Location: Lahore, Pakistan</p></div>
+      <div><h4>Follow</h4><p><a href="#"><i class="fa-brands fa-facebook-f"></i> Facebook</a></p><p><a href="#"><i class="fa-brands fa-instagram"></i> Instagram</a></p></div>
     </div>
     <div class="footer-note">© 2026 Streamline Events. All rights reserved.</div>
   </footer>
