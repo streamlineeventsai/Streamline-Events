@@ -201,10 +201,8 @@
       return `REG-${String(max + 1).padStart(3, '0')}`;
     }
 
-    // ============================================================
-    // 🔽 YAHAN APNA ACTUAL WEBHOOK URL PASTE KAREIN 🔽
-    const WEBHOOK_URL = 'https://eu1.make.com/public/shared-scenario/bpjSDZrmUlk/integration-webhooks-google-sheets-too';
-    // ============================================================
+    // ✅ Webhook URL added (your actual URL)
+    const REG_WEBHOOK_URL = 'https://hook.eu1.make.com/cvlpzauqx05gg4djx24zrc1vb3zo0htk';
 
     document.getElementById('registration-form').addEventListener('submit', async function(e) {
       e.preventDefault();
@@ -240,7 +238,7 @@
       const payload = { name: fullName, email, phone, cnic, event: eventDetail.name, fee, regId, qrCodeUrl: qrUrl };
 
       try {
-        const response = await fetch(WEBHOOK_URL, {
+        const response = await fetch(REG_WEBHOOK_URL, {
           method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
         });
         const text = await response.text();
@@ -250,7 +248,7 @@
           alert('Registration saved locally but automation failed.');
         }
       } catch (err) {
-        console.error(err);
+        console.error('Webhook error:', err);
         alert('Registration saved but webhook failed.');
       }
 
