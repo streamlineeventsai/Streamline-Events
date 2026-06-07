@@ -142,30 +142,36 @@
     <div class="footer-note">© 2026 Streamline Events. All rights reserved.</div>
   </footer>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="js/main.js"></script>
   <script>
-    // Get event details from main.js events array
-    function getEventsList() {
-      // Access global events from main.js
-      return window.getEvents ? window.getEvents() : [];
+    // Helper: format fee
+    function formatFee(amount) {
+      return 'PKR ' + Number(amount).toLocaleString('en-US');
     }
 
-    // Event details mapping (fallback in case events not loaded)
-    const eventDetailsMap = {};
+    // Load events from localStorage (from main.js data)
+    let eventDetailsMap = {};
 
-    // Load events from localStorage/main.js
     function loadEventsIntoDropdown() {
-      const events = getEventsList();
+      const eventsRaw = localStorage.getItem('events');
+      let events = [];
+      if (eventsRaw) {
+        events = JSON.parse(eventsRaw);
+      } else {
+        // fallback to default events (from main.js, but main.js will init)
+        events = [
+          { id: 'EVT-001', name: 'Tech Conference 2026', date: 'Dec 10, 2026', time: '9:00 AM - 5:00 PM', fee: 1500, location: 'Expo Center' },
+          { id: 'EVT-002', name: 'AI Workshop', date: 'Dec 15, 2026', time: '10:00 AM - 4:00 PM', fee: 3000, location: 'Tech Hub' },
+          { id: 'EVT-003', name: 'Networking Night', date: 'Dec 20, 2026', time: '7:00 PM - 11:00 PM', fee: 5000, location: 'Royal Palm' }
+        ];
+      }
       const select = document.getElementById('eventSelect');
-      if (!select) return;
       select.innerHTML = '<option value="">-- Choose an event --</option>';
       events.forEach(event => {
         const option = document.createElement('option');
         option.value = event.id;
         option.textContent = `${event.name} • ${event.date} • ${event.time} • ${formatFee(event.fee)}`;
         select.appendChild(option);
-        // Store details for quick access
         eventDetailsMap[event.id] = {
           name: event.name,
           date: event.date,
@@ -176,7 +182,6 @@
       });
     }
 
-    // Show event details when event selected
     function setupEventDetails() {
       const select = document.getElementById('eventSelect');
       const detailsDiv = document.getElementById('eventDetails');
@@ -201,7 +206,7 @@
       });
     }
 
-    // Validation functions (using existing from main.js)
+    // Validation
     function validateNameField(value) {
       return /^[A-Za-z ]{2,}$/.test(value.trim());
     }
@@ -248,9 +253,19 @@
       return isValid;
     }
 
-    // Override createRegistrationId to include CNIC and fullName
-    // We'll use existing createRegistrationId from main.js but need to pass fullName
-    // We'll modify save logic manually
+    // Generate Registration ID
+    function generateRegId() {
+      const registrations = JSON.parse(localStorage.getItem('registrations') || '[]');
+      let max = 0;
+      registrations.forEach(reg => {
+        const num = parseInt(reg.regId.replace('REG-', ''));
+        if (!isNaN(num) && num > max) max = num;
+      });
+      return `REG-${String(max + 1).padStart(3, '0')}`;
+    }
+
+    // Make.com webhook URL (replace with your actual webhook URL from shared scenario)
+    const WEBHOOK_URL = 'https://hook.make.com/YOUR_WEBHOOK_ID'; // ⚠️ CHANGE THIS ⚠️
 
     // Form submission
     document.getElementById('registration-form').addEventListener('submit', async function(e) {
@@ -267,14 +282,7 @@
       const eventDetail = eventDetailsMap[eventId];
       const fee = eventDetail.fee;
 
-      // Generate registration ID
-      const registrations = JSON.parse(localStorage.getItem('registrations') || '[]');
-      let maxNum = 0;
-      registrations.forEach(reg => {
-        const num = parseInt(reg.regId.replace('REG-', ''));
-        if (!isNaN(num) && num > maxNum) maxNum = num;
-      });
-      const regId = `REG-${String(maxNum + 1).padStart(3, '0')}`;
+      const regId = generateRegId();
       const qrUrl = `https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl=${encodeURIComponent(regId)}`;
 
       const registration = {
@@ -286,24 +294,23 @@
         eventId: eventId,
         eventName: eventDetail.name,
         fee: fee,
-        paymentStatus: 'Paid', // No payment modal, so directly Paid
+        paymentStatus: 'Paid',
         qrCodeUrl: qrUrl,
         timestamp: new Date().toISOString()
       };
 
       // Save to localStorage
+      let registrations = JSON.parse(localStorage.getItem('registrations') || '[]');
       registrations.push(registration);
       localStorage.setItem('registrations', JSON.stringify(registrations));
 
-      // Update attendance (default absent)
+      // Update attendance
       let attendance = JSON.parse(localStorage.getItem('attendance') || '[]');
       attendance.push({ regId: regId, status: 'Absent' });
       localStorage.setItem('attendance', JSON.stringify(attendance));
 
       // Send to Make.com webhook
-      // ** REPLACE THIS URL WITH YOUR ACTUAL MAKE.COM WEBHOOK URL **
-      const WEBHOOK_URL = 'https://hook.make.com/YOUR_WEBHOOK_ID'; // ⬅️ Change this!
-      const webhookPayload = {
+      const payload = {
         name: fullName,
         email: email,
         phone: phone,
@@ -318,20 +325,20 @@
         const response = await fetch(WEBHOOK_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(webhookPayload)
+          body: JSON.stringify(payload)
         });
         const text = await response.text();
         if (response.ok || text.includes('Accepted')) {
-          alert('Registration successful! Check your email for QR code (automation will send it).');
+          alert('Registration successful! Check your email for QR code.');
         } else {
-          alert('Registration saved locally but automation failed. Please contact support.');
+          alert('Registration saved locally but automation failed.');
         }
-      } catch (error) {
-        console.error('Webhook error:', error);
-        alert('Registration saved locally but automation failed. Please try again later.');
+      } catch (err) {
+        console.error(err);
+        alert('Registration saved but webhook failed.');
       }
 
-      // Show QR code on page
+      // Show QR code
       const qrContainer = document.getElementById('qrCodeContainer');
       qrContainer.innerHTML = `
         <img src="${qrUrl}" alt="QR code" style="max-width:150px; margin:0 auto; display:block;" />
@@ -343,13 +350,13 @@
       document.getElementById('registration-form').reset();
       document.getElementById('eventDetails').style.display = 'none';
       document.getElementById('submitBtn').disabled = true;
+      document.getElementById('submitBtn').style.opacity = '0.5';
     });
 
-    // Initialize
+    // Initialize page
     document.addEventListener('DOMContentLoaded', () => {
       loadEventsIntoDropdown();
       setupEventDetails();
-      // Add input listeners for validation
       ['firstName', 'lastName', 'email', 'phone', 'cnic', 'eventSelect'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.addEventListener('input', validateForm);
@@ -358,6 +365,7 @@
       validateForm();
     });
   </script>
+  <!-- Botpress placeholder -->
   <script>
     window.botpressWebchat = { botId: 'YOUR_BOTPRESS_BOT_ID', host: 'https://cdn.botpress.com' };
   </script>
