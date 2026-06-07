@@ -1,4 +1,4 @@
-// Make.com Webhook Configuration
+// Make.com Webhook Configuration (for contact form and old register page)
 const WEBHOOK_URL = 'https://hook.eu1.make.com/r6rcpxdpzrtk8sgr6b7o5xoe6wjc1qyb';
 
 // QR code – Google Charts API
@@ -43,7 +43,6 @@ const defaultEvents = [
   },
 ];
 
-// Sample registrations with CNIC field
 const sampleRegistrations = [
   {
     regId: 'REG-001',
@@ -226,10 +225,185 @@ function setupNavigation() {
   });
 }
 
-// Note: bindRegisterPage is no longer used because register.html uses its own script.
-// We keep a dummy function to avoid errors.
+// ===============================================
+// FIXED: bindRegisterPage with safety check to avoid errors on new custom form
+// ===============================================
 function bindRegisterPage() {
-  // custom form in register.html handles everything
+  // Check if we are on a page that has the OLD registration form elements
+  // If not, exit early (so that it doesn't interfere with the new custom form in register.html)
+  const customForm = document.getElementById('registration-form');
+  if (!customForm) return; // not the new custom form? Actually old form has different id? Old had "registration-form" as well? Wait.
+  // Old form had id "registration-form" as well? Actually in earlier versions, old register page also had "registration-form".
+  // To differentiate: check for presence of 'fullName' field which exists in old but not in new custom form.
+  const fullNameInput = document.getElementById('fullName');
+  if (!fullNameInput) return; // new custom form uses firstName, lastName, so fullName missing -> exit.
+  
+  // Existing code for old register page (if any) – but we will keep it for compatibility
+  const emailInput = document.getElementById('email');
+  const phoneInput = document.getElementById('phone');
+  const eventSelect = document.getElementById('eventSelect');
+  const agreementInput = document.getElementById('agreement');
+  const eventFeeLabel = document.getElementById('eventFee');
+  const submitBtn = document.getElementById('submitBtn');
+  const registrationStatus = document.getElementById('registration-status');
+  const qrCodeContainer = document.getElementById('qrCodeContainer');
+  const paymentModal = document.getElementById('paymentModal');
+  const paymentModalClose = document.getElementById('paymentModalClose');
+  const paymentMobileInput = document.getElementById('paymentMobile');
+  const paymentModalAmount = document.getElementById('paymentModalAmount');
+  const paymentConfirmBtn = document.getElementById('paymentConfirmBtn');
+  const paymentMobileError = document.getElementById('paymentMobileError');
+
+  let currentRegistration = null;
+
+  function renderEventOptions() {
+    const events = getEvents();
+    eventSelect.innerHTML = '<option value="">-- Choose an event --</option>';
+    events.forEach((event) => {
+      const option = document.createElement('option');
+      option.value = event.id;
+      option.textContent = `${event.name} • ${event.date} • ${event.time} • ${formatFee(event.fee)}`;
+      eventSelect.appendChild(option);
+    });
+  }
+
+  function updateFeeLabel() {
+    const event = getEventById(eventSelect.value);
+    eventFeeLabel.textContent = event ? formatFee(event.fee) : 'PKR 0';
+  }
+
+  function setError(elementId, message) {
+    const element = document.getElementById(elementId);
+    if (element) element.textContent = message;
+  }
+
+  function validateRegistrationForm() {
+    const nameValid = validateName(fullNameInput.value);
+    const emailValid = validateEmail(emailInput.value);
+    const phoneValid = validatePakistanPhone(phoneInput.value);
+    const eventValid = eventSelect.value !== '';
+    const agreementValid = agreementInput.checked;
+
+    setError('fullNameError', !nameValid ? 'Full Name must be 3+ letters and spaces only.' : '');
+    setError('emailError', !emailValid ? 'Enter a valid email address.' : '');
+    setError('phoneError', !phoneValid ? 'Use Pakistan phone format 03xxxxxxxxx.' : '');
+    setError('eventError', !eventValid ? 'Please select an event.' : '');
+    setError('agreementError', !agreementValid ? 'You must confirm the registration fee.' : '');
+
+    submitBtn.disabled = !(nameValid && emailValid && phoneValid && eventValid && agreementValid);
+    submitBtn.style.opacity = submitBtn.disabled ? '0.5' : '1';
+    submitBtn.style.cursor = submitBtn.disabled ? 'not-allowed' : 'pointer';
+
+    return !submitBtn.disabled;
+  }
+
+  function openPaymentModal(registration) {
+    currentRegistration = registration;
+    if (!paymentModal || !paymentModalAmount) return;
+    paymentModalAmount.textContent = formatFee(registration.fee);
+    paymentMobileInput.value = '';
+    paymentMobileError.textContent = '';
+    paymentModal.classList.add('active');
+    paymentModal.setAttribute('aria-hidden', 'false');
+  }
+
+  function closePaymentModal() {
+    if (!paymentModal) return;
+    paymentModal.classList.remove('active');
+    paymentModal.setAttribute('aria-hidden', 'true');
+  }
+
+  function handlePaymentConfirmation() {
+    if (!paymentMobileInput) return;
+    const phoneValue = paymentMobileInput.value.trim();
+    if (!validatePakistanPhone(phoneValue)) {
+      paymentMobileError.textContent = 'Enter a valid Pakistan mobile number.';
+      return;
+    }
+    paymentConfirmBtn.disabled = true;
+    paymentConfirmBtn.textContent = 'Processing...';
+    setTimeout(() => {
+      if (currentRegistration) {
+        updateRegistrationPayment(currentRegistration.regId);
+        updateAttendance(currentRegistration.regId, 'Absent');
+      }
+      paymentConfirmBtn.disabled = false;
+      paymentConfirmBtn.textContent = 'Confirm Payment';
+      closePaymentModal();
+      alert('Payment successful (Demo)');
+    }, 2000);
+  }
+
+  renderEventOptions();
+  updateFeeLabel();
+  validateRegistrationForm();
+
+  fullNameInput.addEventListener('input', validateRegistrationForm);
+  emailInput.addEventListener('input', validateRegistrationForm);
+  phoneInput.addEventListener('input', validateRegistrationForm);
+  eventSelect.addEventListener('change', () => {
+    updateFeeLabel();
+    validateRegistrationForm();
+  });
+  agreementInput.addEventListener('change', validateRegistrationForm);
+
+  registrationForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (!validateRegistrationForm()) return;
+    const selectedEvent = getEventById(eventSelect.value);
+    if (!selectedEvent) return;
+    const registrationId = createRegistrationId();
+    const registration = {
+      regId: registrationId,
+      name: fullNameInput.value.trim(),
+      email: emailInput.value.trim(),
+      phone: phoneInput.value.trim(),
+      eventId: selectedEvent.id,
+      eventName: selectedEvent.name,
+      fee: selectedEvent.fee,
+      paymentStatus: selectedEvent.fee > 0 ? 'Pending' : 'Paid',
+      qrCodeUrl: generateQrCodeUrl(registrationId),
+      timestamp: new Date().toISOString(),
+    };
+    saveRegistration(registration);
+    updateAttendance(registration.regId, 'Absent');
+    const webhookPayload = {
+      name: registration.name,
+      email: registration.email,
+      phone: registration.phone,
+      event: registration.eventName,
+      fee: registration.fee,
+    };
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Processing...';
+    const webhookResult = await sendToWebhook(webhookPayload);
+    registrationStatus.textContent = 'Registration successful! Check email for QR code (demo).';
+    qrCodeContainer.innerHTML = `
+      <img src="${registration.qrCodeUrl}" alt="QR code for ${registration.regId}" style="max-width:150px; margin:0 auto; display:block;" />
+      <p class="qr-note">Save or screenshot your QR code.</p>
+    `;
+    if (webhookResult.success) {
+      alert('Registration successful! Check email for QR code.');
+    } else {
+      alert('Registration saved locally but automation failed. Please contact support.');
+    }
+    registrationForm.reset();
+    eventFeeLabel.textContent = 'PKR 0';
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Submit Registration';
+    submitBtn.style.opacity = '0.5';
+    submitBtn.style.cursor = 'not-allowed';
+    if (selectedEvent.fee > 0) {
+      openPaymentModal(registration);
+    }
+  });
+
+  if (paymentModalClose) {
+    paymentModalClose.addEventListener('click', closePaymentModal);
+  }
+  if (paymentConfirmBtn) {
+    paymentConfirmBtn.addEventListener('click', handlePaymentConfirmation);
+  }
 }
 
 function bindContactPage() {
