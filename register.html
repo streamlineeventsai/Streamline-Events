@@ -17,22 +17,10 @@
       margin: 1rem 0;
       border-left: 4px solid var(--gold);
     }
-    .event-details p {
-      margin: 0.5rem 0;
-    }
-    .name-row {
-      display: flex;
-      gap: 1rem;
-    }
-    .name-row > div {
-      flex: 1;
-    }
-    @media (max-width: 640px) {
-      .name-row {
-        flex-direction: column;
-        gap: 0;
-      }
-    }
+    .event-details p { margin: 0.5rem 0; }
+    .name-row { display: flex; gap: 1rem; }
+    .name-row > div { flex: 1; }
+    @media (max-width: 640px) { .name-row { flex-direction: column; gap: 0; } }
   </style>
 </head>
 <body>
@@ -62,82 +50,54 @@
     <section class="container form-section">
       <div class="form-card shadow">
         <form id="registration-form" novalidate>
-          <!-- First & Last Name -->
           <div class="name-row">
             <div>
               <label for="firstName">First Name *</label>
-              <input type="text" id="firstName" name="firstName" placeholder="Your first name" required />
+              <input type="text" id="firstName" placeholder="Your first name" required />
               <div class="error-message" id="firstNameError"></div>
             </div>
             <div>
               <label for="lastName">Last Name *</label>
-              <input type="text" id="lastName" name="lastName" placeholder="Your last name" required />
+              <input type="text" id="lastName" placeholder="Your last name" required />
               <div class="error-message" id="lastNameError"></div>
             </div>
           </div>
-
-          <!-- Email -->
           <label for="email">Email Address *</label>
-          <input type="email" id="email" name="email" placeholder="you@example.com" required />
+          <input type="email" id="email" placeholder="you@example.com" required />
           <div class="error-message" id="emailError"></div>
-
-          <!-- Phone -->
           <label for="phone">Phone Number (03xxxxxxxxx) *</label>
-          <input type="tel" id="phone" name="phone" placeholder="03001234567" required />
+          <input type="tel" id="phone" placeholder="03001234567" required />
           <div class="error-message" id="phoneError"></div>
-
-          <!-- CNIC (with dashes) -->
           <label for="cnic">CNIC (with dashes) *</label>
-          <input type="text" id="cnic" name="cnic" placeholder="12345-1234567-1" required />
+          <input type="text" id="cnic" placeholder="12345-1234567-1" required />
           <div class="error-message" id="cnicError"></div>
-
-          <!-- Event Dropdown -->
           <label for="eventSelect">Select Event *</label>
-          <select id="eventSelect" name="eventSelect" required>
-            <option value="">-- Choose an event --</option>
-          </select>
+          <select id="eventSelect" required><option value="">-- Choose an event --</option></select>
           <div class="error-message" id="eventError"></div>
-
-          <!-- Dynamic Event Details -->
           <div id="eventDetails" class="event-details" style="display: none;">
             <p><strong>📅 Date:</strong> <span id="eventDate">-</span></p>
             <p><strong>⏰ Time:</strong> <span id="eventTime">-</span></p>
             <p><strong>💰 Fee:</strong> <span id="eventFee">-</span></p>
             <p><strong>📍 Venue:</strong> <span id="eventLocation">-</span></p>
           </div>
-
           <button type="submit" id="submitBtn" class="btn btn-primary" disabled>Register Now</button>
           <div id="registration-status" class="form-note"></div>
         </form>
       </div>
-
       <div class="qr-card shadow">
         <div class="ticket-decor" style="background-image: url('assets/images/ticket-bg.jpg');"></div>
         <h2>Your QR Code</h2>
         <p>After registration, your personalized QR code will appear here.</p>
-        <div id="qrCodeContainer" class="qr-preview">
-          <p>✨ Complete registration to see your QR code ✨</p>
-        </div>
+        <div id="qrCodeContainer" class="qr-preview"><p>✨ Complete registration to see your QR code ✨</p></div>
       </div>
     </section>
   </main>
 
   <footer class="site-footer">
     <div class="container footer-grid">
-      <div>
-        <h3>Streamline Events</h3>
-        <p>Delivering elegant event experiences with automation, QR capabilities, and support built in.</p>
-      </div>
-      <div>
-        <h4>Contact</h4>
-        <p>Email: <a href="mailto:support@streamlineevents.com">support@streamlineevents.com</a></p>
-        <p>Location: Lahore, Pakistan</p>
-      </div>
-      <div>
-        <h4>Follow</h4>
-        <p><a href="#"><i class="fa-brands fa-facebook-f"></i> Facebook</a></p>
-        <p><a href="#"><i class="fa-brands fa-instagram"></i> Instagram</a></p>
-      </div>
+      <div><h3>Streamline Events</h3><p>Delivering elegant event experiences with automation, QR capabilities, and support built in.</p></div>
+      <div><h4>Contact</h4><p>Email: <a href="mailto:support@streamlineevents.com">support@streamlineevents.com</a></p><p>Location: Lahore, Pakistan</p></div>
+      <div><h4>Follow</h4><p><a href="#"><i class="fa-brands fa-facebook-f"></i> Facebook</a></p><p><a href="#"><i class="fa-brands fa-instagram"></i> Instagram</a></p></div>
     </div>
     <div class="footer-note">© 2026 Streamline Events. All rights reserved.</div>
   </footer>
@@ -149,7 +109,6 @@
       return 'PKR ' + Number(amount).toLocaleString('en-US');
     }
 
-    // Load events from localStorage (from main.js data)
     let eventDetailsMap = {};
 
     function loadEventsIntoDropdown() {
@@ -158,7 +117,6 @@
       if (eventsRaw) {
         events = JSON.parse(eventsRaw);
       } else {
-        // fallback to default events (from main.js, but main.js will init)
         events = [
           { id: 'EVT-001', name: 'Tech Conference 2026', date: 'Dec 10, 2026', time: '9:00 AM - 5:00 PM', fee: 1500, location: 'Expo Center' },
           { id: 'EVT-002', name: 'AI Workshop', date: 'Dec 15, 2026', time: '10:00 AM - 4:00 PM', fee: 3000, location: 'Tech Hub' },
@@ -173,11 +131,8 @@
         option.textContent = `${event.name} • ${event.date} • ${event.time} • ${formatFee(event.fee)}`;
         select.appendChild(option);
         eventDetailsMap[event.id] = {
-          name: event.name,
-          date: event.date,
-          time: event.time,
-          fee: event.fee,
-          location: event.location
+          name: event.name, date: event.date, time: event.time,
+          fee: event.fee, location: event.location
         };
       });
     }
@@ -189,7 +144,6 @@
       const timeSpan = document.getElementById('eventTime');
       const feeSpan = document.getElementById('eventFee');
       const locationSpan = document.getElementById('eventLocation');
-
       select.addEventListener('change', () => {
         const eventId = select.value;
         if (eventId && eventDetailsMap[eventId]) {
@@ -206,23 +160,10 @@
       });
     }
 
-    // Validation
-    function validateNameField(value) {
-      return /^[A-Za-z ]{2,}$/.test(value.trim());
-    }
-
-    function validateEmailField(value) {
-      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
-    }
-
-    function validatePhoneField(value) {
-      const cleaned = value.replace(/[-\s]/g, '');
-      return /^03\d{9}$/.test(cleaned);
-    }
-
-    function validateCNIC(value) {
-      return /^\d{5}-\d{7}-\d{1}$/.test(value.trim());
-    }
+    function validateNameField(value) { return /^[A-Za-z ]{2,}$/.test(value.trim()); }
+    function validateEmailField(value) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim()); }
+    function validatePhoneField(value) { return /^03\d{9}$/.test(value.replace(/[-\s]/g, '')); }
+    function validateCNIC(value) { return /^\d{5}-\d{7}-\d{1}$/.test(value.trim()); }
 
     function validateForm() {
       const firstName = document.getElementById('firstName').value.trim();
@@ -231,21 +172,18 @@
       const phone = document.getElementById('phone').value.trim();
       const cnic = document.getElementById('cnic').value.trim();
       const eventId = document.getElementById('eventSelect').value;
-
       const firstNameValid = firstName.length >= 2;
       const lastNameValid = lastName.length >= 2;
       const emailValid = validateEmailField(email);
       const phoneValid = validatePhoneField(phone);
       const cnicValid = validateCNIC(cnic);
       const eventValid = eventId !== '';
-
       document.getElementById('firstNameError').textContent = firstNameValid ? '' : 'First name required (min 2 letters).';
       document.getElementById('lastNameError').textContent = lastNameValid ? '' : 'Last name required (min 2 letters).';
       document.getElementById('emailError').textContent = emailValid ? '' : 'Valid email required.';
       document.getElementById('phoneError').textContent = phoneValid ? '' : 'Phone must be 03xxxxxxxxx.';
       document.getElementById('cnicError').textContent = cnicValid ? '' : 'CNIC format: 12345-1234567-1';
       document.getElementById('eventError').textContent = eventValid ? '' : 'Select an event.';
-
       const isValid = firstNameValid && lastNameValid && emailValid && phoneValid && cnicValid && eventValid;
       const submitBtn = document.getElementById('submitBtn');
       submitBtn.disabled = !isValid;
@@ -253,7 +191,6 @@
       return isValid;
     }
 
-    // Generate Registration ID
     function generateRegId() {
       const registrations = JSON.parse(localStorage.getItem('registrations') || '[]');
       let max = 0;
@@ -264,10 +201,11 @@
       return `REG-${String(max + 1).padStart(3, '0')}`;
     }
 
-    // Make.com webhook URL (replace with your actual webhook URL from shared scenario)
-    const WEBHOOK_URL = 'https://hook.make.com/YOUR_WEBHOOK_ID'; // ⚠️ CHANGE THIS ⚠️
+    // ============================================================
+    // 🔽 YAHAN APNA ACTUAL WEBHOOK URL PASTE KAREIN 🔽
+    const WEBHOOK_URL = 'https://hook.eu1.make.com/YOUR_ACTUAL_WEBHOOK_ID_HERE';
+    // ============================================================
 
-    // Form submission
     document.getElementById('registration-form').addEventListener('submit', async function(e) {
       e.preventDefault();
       if (!validateForm()) return;
@@ -286,46 +224,24 @@
       const qrUrl = `https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl=${encodeURIComponent(regId)}`;
 
       const registration = {
-        regId: regId,
-        name: fullName,
-        email: email,
-        phone: phone,
-        cnic: cnic,
-        eventId: eventId,
-        eventName: eventDetail.name,
-        fee: fee,
-        paymentStatus: 'Paid',
-        qrCodeUrl: qrUrl,
-        timestamp: new Date().toISOString()
+        regId, name: fullName, email, phone, cnic, eventId,
+        eventName: eventDetail.name, fee, paymentStatus: 'Paid',
+        qrCodeUrl: qrUrl, timestamp: new Date().toISOString()
       };
 
-      // Save to localStorage
       let registrations = JSON.parse(localStorage.getItem('registrations') || '[]');
       registrations.push(registration);
       localStorage.setItem('registrations', JSON.stringify(registrations));
 
-      // Update attendance
       let attendance = JSON.parse(localStorage.getItem('attendance') || '[]');
-      attendance.push({ regId: regId, status: 'Absent' });
+      attendance.push({ regId, status: 'Absent' });
       localStorage.setItem('attendance', JSON.stringify(attendance));
 
-      // Send to Make.com webhook
-      const payload = {
-        name: fullName,
-        email: email,
-        phone: phone,
-        cnic: cnic,
-        event: eventDetail.name,
-        fee: fee,
-        regId: regId,
-        qrCodeUrl: qrUrl
-      };
+      const payload = { name: fullName, email, phone, cnic, event: eventDetail.name, fee, regId, qrCodeUrl: qrUrl };
 
       try {
         const response = await fetch(WEBHOOK_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
         });
         const text = await response.text();
         if (response.ok || text.includes('Accepted')) {
@@ -338,22 +254,16 @@
         alert('Registration saved but webhook failed.');
       }
 
-      // Show QR code
-      const qrContainer = document.getElementById('qrCodeContainer');
-      qrContainer.innerHTML = `
+      document.getElementById('qrCodeContainer').innerHTML = `
         <img src="${qrUrl}" alt="QR code" style="max-width:150px; margin:0 auto; display:block;" />
         <p class="qr-note">Save or screenshot your QR code.</p>
       `;
       document.getElementById('registration-status').textContent = 'Registration successful!';
-
-      // Reset form
       document.getElementById('registration-form').reset();
       document.getElementById('eventDetails').style.display = 'none';
       document.getElementById('submitBtn').disabled = true;
-      document.getElementById('submitBtn').style.opacity = '0.5';
     });
 
-    // Initialize page
     document.addEventListener('DOMContentLoaded', () => {
       loadEventsIntoDropdown();
       setupEventDetails();
@@ -365,7 +275,6 @@
       validateForm();
     });
   </script>
-  <!-- Botpress placeholder -->
   <script>
     window.botpressWebchat = { botId: 'YOUR_BOTPRESS_BOT_ID', host: 'https://cdn.botpress.com' };
   </script>
